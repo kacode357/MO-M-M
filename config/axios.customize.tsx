@@ -25,28 +25,37 @@ const createAxiosInstance = (baseURL: string): AxiosInstance => {
   // Request interceptor to attach accessToken
   instance.interceptors.request.use(
     async (config) => {
+      console.log(`Request to ${config.url} with method ${config.method}`); // Log request
       const token = await AsyncStorage.getItem("accessToken");
       if (token) {
         config.headers.Authorization = `Bearer ${token}`;
       }
       return config;
     },
-    (error) => Promise.reject(error)
+    (error) => {
+      console.error("Request interceptor error:", error);
+      return Promise.reject(error);
+    }
   );
 
   return instance;
 };
 
-// Default Axios instance with alerts
+// Default Axios instance with alerts for both success and error
 const defaultAxiosInstance: AxiosInstance = createAxiosInstance(
-  'https://mammap-dxapa6h5c2ctd9hz.southeastasia-01.azurewebsites.net'
+  "https://mammap-dxapa6h5c2ctd9hz.southeastasia-01.azurewebsites.net"
 );
 
 defaultAxiosInstance.interceptors.response.use(
   (response: AxiosResponse) => {
     const data = response.data as ApiResponse;
+    console.log(`defaultAxiosInstance success response for ${response.config.url}:`, {
+      status: response.status,
+      data,
+    });
     // Handle success responses (200 or 201) with a message
     if ((response.status === 200 || response.status === 201) && data?.message) {
+      console.log("Triggering success alert from defaultAxiosInstance:", data.message);
       triggerAlert({
         title: "Thành công",
         message: data.message,
@@ -59,6 +68,7 @@ defaultAxiosInstance.interceptors.response.use(
   },
   (err: AxiosError<ApiResponse>) => {
     const { response } = err;
+    console.error(`defaultAxiosInstance error response for ${err.config?.url}:`, response?.data);
     if (response) {
       handleErrorByNotification(err);
     }
@@ -66,23 +76,33 @@ defaultAxiosInstance.interceptors.response.use(
   }
 );
 
-// Skip Alert Axios instance (no success or error alerts)
+// Skip Alert Axios instance (no success alerts, but error alerts)
 const SkipAlertAxiosInstance: AxiosInstance = createAxiosInstance(
-  'https://mammap-dxapa6h5c2ctd9hz.southeastasia-01.azurewebsites.net'
+  "https://mammap-dxapa6h5c2ctd9hz.southeastasia-01.azurewebsites.net"
 );
 
 SkipAlertAxiosInstance.interceptors.response.use(
-  (response: AxiosResponse) => response.data, // Return data without alerts
+  (response: AxiosResponse) => {
+    console.log(`SkipAlertAxiosInstance success response for ${response.config.url}:`, {
+      status: response.status,
+      data: response.data,
+    });
+    return response.data; // No alerts for success
+  },
   (err: AxiosError<ApiResponse>) => {
-    console.error("Error response:", err.response?.data); // Log error
-    return Promise.reject(err); // Pass error without alert
+    const { response } = err;
+    console.error(`SkipAlertAxiosInstance error response for ${err.config?.url}:`, response?.data);
+    if (response) {
+      handleErrorByNotification(err); // Trigger error notification
+    }
+    return Promise.reject(err); // Pass error
   }
 );
 
-// Error handler for defaultAxiosInstance
+// Error handler for both instances
 const handleErrorByNotification = (errors: AxiosError<ApiResponse>) => {
   const data = errors.response?.data as ApiResponse;
-  console.error("Error response:", data);
+  console.error("handleErrorByNotification processing error:", data);
 
   // Default title and message
   let errorTitle = data?.title || "Lỗi";
@@ -97,6 +117,10 @@ const handleErrorByNotification = (errors: AxiosError<ApiResponse>) => {
       .join("\n");
   }
 
+  console.log("Triggering error alert from handleErrorByNotification:", {
+    title: errorTitle,
+    message: errorMessage,
+  });
   // Trigger alert
   triggerAlert({
     title: errorTitle,

@@ -10,7 +10,6 @@ const LoginUserApi = async (data: { userName: string; password: string; }) => {
 };
 const GetCurrentUserApi = async () => {
     const response = await SkipAlertAxiosInstance.get('/api/users/get-current-login');
-    console.log('GetCurrentUserApi response:', response);
     return response;
 };
 const ForgotPasswordApi = async (data: { email: string; }) => {
@@ -21,9 +20,10 @@ const ResetPasswordApi = async (data: { email: string; otp: string; newPassword:
     const response = await defaultAxiosInstance.post('/api/users/reset-password', data);
     return response;
 };
-const GetCurrentLoginApi = async () => {
-    const response = await defaultAxiosInstance.get('/api/users/get-current-login');
+
+const RefreshTokenApi = async (data: { accessToken: string; refreshToken: string; }) => {
+    const response = await SkipAlertAxiosInstance.post('/api/users/refresh-token', data);
     return response;
 };
-export { CreateUserApi, ForgotPasswordApi, GetCurrentLoginApi, GetCurrentUserApi, LoginUserApi, ResetPasswordApi };
+export { CreateUserApi, ForgotPasswordApi, GetCurrentUserApi, LoginUserApi, RefreshTokenApi, ResetPasswordApi };
 

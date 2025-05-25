@@ -1,4 +1,4 @@
-import logo from '@/assets/images/logo-mm-final.png';
+import logo from '@/assets/images/logo-mm-final-2.png';
 import { Colors } from '@/constants/Colors';
 import { useAlert } from '@/contexts/AlertContext';
 import { useColorScheme } from '@/hooks/useColorScheme';
@@ -65,7 +65,7 @@ const Signin = () => {
       await AsyncStorage.setItem('user_email', email);
       router.push('/(tabs)');
     } catch (error) {
-      console.error('Signin error:', error);
+      console.log('Signin error:', error);
     } finally {
       setIsLoading(false);
     }

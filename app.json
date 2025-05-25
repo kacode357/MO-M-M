@@ -4,12 +4,12 @@
     "slug": "m-m",
     "version": "1.0.0",
     "orientation": "portrait",
-    "icon": "./assets/images/logo-mm-final.png",
+    "icon": "./assets/images/logo-app.png",
     "scheme": "mm",
     "userInterfaceStyle": "automatic",
     "newArchEnabled": true,
     "splash": {
-      "image": "./assets/images/logo-mm-final.png",
+      "image": "./assets/images/logo-app.png",
       "resizeMode": "contain",
       "backgroundColor": "#ffffff"
     },
@@ -18,7 +18,7 @@
     },
     "android": {
       "adaptiveIcon": {
-        "foregroundImage": "./assets/images/adaptive-icon.png",
+        "foregroundImage": "./assets/images/logo-app.png",
         "backgroundColor": "#ffffff"
       },
       "edgeToEdgeEnabled": true,

@@ -1,4 +1,4 @@
-import logo from '@/assets/images/logo-mm-final.png';
+import logo from '@/assets/images/logo-mm-final-2.png';
 import { Colors } from '@/constants/Colors';
 import { Fonts } from '@/constants/Fonts';
 import { useColorScheme } from '@/hooks/useColorScheme';

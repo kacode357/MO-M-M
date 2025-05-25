@@ -43,61 +43,71 @@ const Signup = () => {
   };
 
   const handleSignup = async () => {
-    if (!email || !fullName || !userName || !password || !confirmPassword) {
-      showAlert({
-        title: 'Lỗi',
-        message: 'Vui lòng điền đầy đủ tất cả các trường.',
-        confirmText: 'OK',
-        showCancel: false,
-      });
-      return;
-    }
+  if (!email || !fullName || !userName || !password || !confirmPassword) {
+    showAlert({
+      title: 'Lỗi',
+      message: 'Vui lòng điền đầy đủ tất cả các trường.',
+      confirmText: 'OK',
+      showCancel: false,
+    });
+    return;
+  }
 
-    if (!/\S+@\S+\.\S+/.test(email)) {
-      showAlert({
-        title: 'Lỗi',
-        message: 'Email không hợp lệ.',
-        confirmText: 'OK',
-        showCancel: false,
-      });
-      return;
-    }
+  if (!/\S+@\S+\.\S+/.test(email)) {
+    showAlert({
+      title: 'Lỗi',
+      message: 'Email không hợp lệ.',
+      confirmText: 'OK',
+      showCancel: false,
+    });
+    return;
+  }
 
-    if (password !== confirmPassword) {
-      showAlert({
-        title: 'Lỗi',
-        message: 'Mật khẩu và xác nhận mật khẩu không khớp.',
-        confirmText: 'OK',
-        showCancel: false,
-      });
-      return;
-    }
+  if (!/^[a-zA-Z0-9_-]+$/.test(userName)) {
+    showAlert({
+      title: 'Lỗi',
+      message: 'Tên đăng nhập không được chứa khoảng cách hoặc ký tự đặc biệt.',
+      confirmText: 'OK',
+      showCancel: false,
+    });
+    return;
+  }
 
-    if (password.length < 6) {
-      showAlert({
-        title: 'Lỗi',
-        message: 'Mật khẩu phải có ít nhất 6 ký tự.',
-        confirmText: 'OK',
-        showCancel: false,
-      });
-      return;
-    }
+  if (password !== confirmPassword) {
+    showAlert({
+      title: 'Lỗi',
+      message: 'Mật khẩu và xác nhận mật khẩu không khớp.',
+      confirmText: 'OK',
+      showCancel: false,
+    });
+    return;
+  }
 
-    setIsLoading(true);
-    try {
-      await CreateUserApi({
-        fullName,
-        email,
-        userName,
-        password,
-      });
-      router.push('/(auth)/signin');
-    } catch (error) {
-      console.error('Signup error:', error);
-    } finally {
-      setIsLoading(false);
-    }
-  };
+  if (password.length < 6) {
+    showAlert({
+      title: 'Lỗi',
+      message: 'Mật khẩu phải có ít nhất 6 ký tự.',
+      confirmText: 'OK',
+      showCancel: false,
+    });
+    return;
+  }
+
+  setIsLoading(true);
+  try {
+    await CreateUserApi({
+      fullName,
+      email,
+      userName,
+      password,
+    });
+    router.push('/(auth)/signin');
+  } catch (error) {
+    console.error('Signup error:', error);
+  } finally {
+    setIsLoading(false);
+  }
+};
 
   useEffect(() => {
     const keyboardDidShow = (event: KeyboardEvent) => {

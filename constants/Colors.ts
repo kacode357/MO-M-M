@@ -13,10 +13,11 @@ export const Colors = {
     primaryText: '#FF9500', // New: Orange text color
     blackText: '#000000', // New: Black text color
     whiteText: '#FFFFFF', // New: White text color
-     safeAreaBackground: '#F5F5F5',
+    safeAreaBackground: '#F5F5F5',
+    grayBackground: '#E0E0E0', // New: Slightly darker gray background
   },
   dark: {
-      text: '#11181C',
+    text: '#11181C',
     background: '#FFFFFF', // White background for general use
     tint: tintColorLight,
     icon: '#687076',
@@ -26,6 +27,7 @@ export const Colors = {
     primaryText: '#FF9500', // New: Orange text color
     blackText: '#000000', // New: Black text color
     whiteText: '#FFFFFF', // New: White text color  
-     safeAreaBackground: '#2C2C2E',
+    safeAreaBackground: '#2C2C2E',
+    grayBackground: '#3A3A3C', // New: Slightly darker gray background
   },
 };

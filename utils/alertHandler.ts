@@ -6,7 +6,7 @@ type ShowAlertFunction = (options: {
   confirmText?: string;
   cancelText?: string;
   showCancel?: boolean;
-  isSuccess?: boolean; // Add isSuccess flag
+  isSuccess?: boolean;
 }) => void;
 
 let showAlert: ShowAlertFunction | null = null;
@@ -16,7 +16,8 @@ export const setGlobalAlert = (alertFn: ShowAlertFunction) => {
 };
 
 export const triggerAlert = (options: Parameters<ShowAlertFunction>[0]) => {
-  console.log("triggerAlert called with options:", options); // For debugging
+  // Enhanced logging with stack trace to identify caller
+  console.log("triggerAlert called with options:", options, "Stack:", new Error().stack);
   if (showAlert) {
     showAlert(options);
   } else {
