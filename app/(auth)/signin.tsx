@@ -1,8 +1,7 @@
 import logo from '@/assets/images/logo-mm-final-2.png';
 import { Colors } from '@/constants/Colors';
-import { useAlert } from '@/contexts/AlertContext';
 import { useColorScheme } from '@/hooks/useColorScheme';
-import { GetCurrentUserApi, LoginUserApi } from '@/services/user.services'; // Add GetCurrentUserApi
+import { GetCurrentUserApi, LoginUserApi } from '@/services/user.services';
 import { signinStyles } from '@/styles/SigninStyles';
 import { Ionicons } from '@expo/vector-icons';
 import AsyncStorage from '@react-native-async-storage/async-storage';
@@ -21,7 +20,6 @@ import {
 const Signin = () => {
   const colorScheme = useColorScheme() ?? 'light';
   const router = useRouter();
-  const { showAlert } = useAlert();
 
   const [userName, setUserName] = useState('');
   const [password, setPassword] = useState('');
@@ -37,12 +35,7 @@ const Signin = () => {
   const handleSignin = async () => {
     // Client-side validation: only check if fields are filled
     if (!userName || !password) {
-      showAlert({
-        title: 'Lỗi',
-        message: 'Vui lòng điền đầy đủ tên đăng nhập và mật khẩu.',
-        confirmText: 'OK',
-        showCancel: false,
-      });
+      console.log('Validation error: Please fill in both username and password.');
       return;
     }
 
@@ -52,18 +45,20 @@ const Signin = () => {
         userName,
         password,
       });
+      console.log('Login response:', loginResponse.data);
       const { accessToken, refreshToken } = loginResponse.data;
       await AsyncStorage.setItem('accessToken', accessToken);
-      console.log('Login response data:', accessToken);
       await AsyncStorage.setItem('refreshToken', refreshToken);
       const userResponse = await GetCurrentUserApi();
-      console.log('GetCurrentUser response data:', userResponse);
-      const { premium, id, userName: userNameResponse, email } = userResponse.data;
+      const { premium, id, userName: userNameResponse, email, fullname } = userResponse.data;
+
       await AsyncStorage.setItem('user_premium', JSON.stringify(premium));
       await AsyncStorage.setItem('user_id', id);
       await AsyncStorage.setItem('user_name', userNameResponse);
       await AsyncStorage.setItem('user_email', email);
+      await AsyncStorage.setItem('user_fullname', fullname);
       router.push('/(tabs)');
+    
     } catch (error) {
       console.log('Signin error:', error);
     } finally {

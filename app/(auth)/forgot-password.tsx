@@ -70,8 +70,8 @@ const ForgotPassword = () => {
     setError('');
 
     try {
-      const response = await ForgotPasswordApi({ email });
-      console.log('ForgotPasswordApi response:', response.data);
+       await ForgotPasswordApi({ email });
+ 
       setRequestAttempts((prev) => prev + 1);
       router.push({
         pathname: '/(auth)/verify-otp',

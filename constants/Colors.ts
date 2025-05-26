@@ -1,5 +1,5 @@
 const tintColorLight = '#0a7ea4';
-const tintColorDark = '#fff';
+
 
 export const Colors = {
   light: {
@@ -15,6 +15,8 @@ export const Colors = {
     whiteText: '#FFFFFF', // New: White text color
     safeAreaBackground: '#F5F5F5',
     grayBackground: '#E0E0E0', // New: Slightly darker gray background
+    success: '#28a745',
+    error: '#dc3545',
   },
   dark: {
     text: '#11181C',
@@ -29,5 +31,7 @@ export const Colors = {
     whiteText: '#FFFFFF', // New: White text color  
     safeAreaBackground: '#2C2C2E',
     grayBackground: '#3A3A3C', // New: Slightly darker gray background
+    success: '#28a745',
+    error: '#dc3545',
   },
 };

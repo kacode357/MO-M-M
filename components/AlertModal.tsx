@@ -2,50 +2,44 @@ import { Colors } from '@/constants/Colors';
 import { Fonts } from '@/constants/Fonts';
 import { useColorScheme } from '@/hooks/useColorScheme';
 import React from 'react';
-import {
-  Modal,
-  StyleSheet,
-  Text,
-  TouchableOpacity,
-  View,
-} from 'react-native';
+import { Modal, StyleSheet, Text, TouchableOpacity, View } from 'react-native';
 
-interface CustomAlertProps {
+interface AlertModalProps {
   visible: boolean;
   title: string;
   message: string;
-  onConfirm?: () => void;
-  onCancel?: () => void;
-  confirmText?: string;
-  cancelText?: string;
+  isSuccess?: boolean;
   showCancel?: boolean;
-  isSuccess?: boolean; // Add isSuccess prop
+  cancelText?: string;
+  confirmText?: string;
+  onCancel?: () => void;
+  onConfirm: () => void;
 }
 
-const CustomAlert: React.FC<CustomAlertProps> = ({
+const AlertModal: React.FC<AlertModalProps> = ({
   visible,
   title,
   message,
-  onConfirm,
-  onCancel,
-  confirmText = 'OK',
-  cancelText = 'Hủy',
-  showCancel = false,
   isSuccess = false,
+  showCancel = false,
+  cancelText = 'Hủy',
+  confirmText = 'OK',
+  onCancel,
+  onConfirm,
 }) => {
   const colorScheme = useColorScheme() ?? 'light';
 
   const styles = StyleSheet.create({
     modalContainer: {
       flex: 1,
+      backgroundColor: 'rgba(0, 0, 0, 0.5)', // Semi-transparent background
       justifyContent: 'center',
       alignItems: 'center',
-      backgroundColor: 'rgba(0, 0, 0, 0.5)',
     },
     alertContainer: {
-      width: '80%',
       backgroundColor: Colors[colorScheme].background,
-      borderRadius: 15,
+      borderRadius: 12,
+      width: '80%',
       padding: 20,
       alignItems: 'center',
       elevation: 5,
@@ -55,22 +49,21 @@ const CustomAlert: React.FC<CustomAlertProps> = ({
       shadowRadius: 4,
     },
     title: {
-      fontFamily: Fonts.Comfortaa.Bold,
-      fontSize: 20,
+      fontFamily: Fonts.Baloo2.Bold,
+      fontSize: 18,
       color: Colors[colorScheme].text,
       marginBottom: 10,
       textAlign: 'center',
     },
     messageContainer: {
       marginBottom: 20,
-      width: '100%',
+      alignItems: 'center',
     },
     message: {
       fontFamily: Fonts.Comfortaa.Regular,
-      fontSize: 16,
-      color: Colors[colorScheme].blackText,
-      textAlign: isSuccess ? 'center' : 'left', // Center for success, left for errors
-      lineHeight: 22,
+      fontSize: 14,
+      color: Colors[colorScheme].text,
+      textAlign: 'center',
     },
     buttonContainer: {
       flexDirection: 'row',
@@ -78,24 +71,23 @@ const CustomAlert: React.FC<CustomAlertProps> = ({
       width: '100%',
     },
     button: {
-      flex: 1,
+      flex: showCancel ? 1 : 0,
       paddingVertical: 10,
-      marginHorizontal: 5,
-      borderRadius: 10,
+      paddingHorizontal: 20,
+      borderRadius: 8,
+      marginHorizontal: showCancel ? 5 : 0,
       alignItems: 'center',
     },
-    confirmButton: {
-      backgroundColor: isSuccess
-        ? '#28a745' // Green for success
-        : Colors[colorScheme].primaryText, // Default for errors
-    },
     cancelButton: {
-      backgroundColor: Colors[colorScheme].icon,
+      backgroundColor: Colors[colorScheme].grayBackground,
+    },
+    confirmButton: {
+      backgroundColor: Colors[colorScheme].tabBackground || '#007AFF',
     },
     buttonText: {
       fontFamily: Fonts.Comfortaa.Medium,
       fontSize: 16,
-      color: Colors[colorScheme].whiteText,
+      color: Colors[colorScheme].background,
     },
   });
 
@@ -142,4 +134,4 @@ const CustomAlert: React.FC<CustomAlertProps> = ({
   );
 };
 
-export default CustomAlert;
+export default AlertModal;

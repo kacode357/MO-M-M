@@ -12,13 +12,12 @@ const Settings = () => {
   const router = useRouter();
 
   const handleLogout = () => {
-    // Removed token-clearing logic as requested
-    const removeToken = async () => {
-        await AsyncStorage.removeItem('accessToken');
-        await AsyncStorage.removeItem('refreshToken');
+    console.log("User logged out");
+    const clearAsyncStorage = async () => {
+      await AsyncStorage.clear();
     };
-    removeToken();
-    router.push('/(tabs)'); // Navigate to sign-in screen on logout
+    clearAsyncStorage();
+    router.push('/(tabs)'); 
   };
 
   const styles = StyleSheet.create({
@@ -55,7 +54,7 @@ const Settings = () => {
     logoutText: {
       fontFamily: Fonts.Comfortaa.Medium,
       fontSize: 16,
-      color: Colors[colorScheme].primaryText || "#FF0000", // Fallback to red if primaryText is not defined
+      color: Colors[colorScheme].primaryText || "#FF0000", 
       textAlign: "center",
       paddingVertical: 20,
     },
@@ -65,19 +64,23 @@ const Settings = () => {
     <ScrollView contentContainerStyle={styles.scrollContainer} style={styles.container}>
       <Text style={styles.sectionTitle}>Tài khoản</Text>
       <TouchableOpacity 
-       style={styles.row} 
-       onPress={() => router.push('/(user)/personal-info')}
+        style={styles.row} 
+        onPress={() => router.push('/(user)/personal-info')}
       >
-       <Text style={styles.rowText}>Thông in cá nhân</Text>
-       <Ionicons name="chevron-forward" size={20} color={Colors[colorScheme].text} />
-          </TouchableOpacity>
-      <TouchableOpacity style={styles.row}>
-        <Text style={styles.rowText}>Tài khoản & Bảo mật</Text>
+        <Text style={styles.rowText}>Thông tin cá nhân</Text>
+        <Ionicons name="chevron-forward" size={20} color={Colors[colorScheme].text} />
+      </TouchableOpacity>
+      <TouchableOpacity 
+        style={styles.row}
+        onPress={() => router.push('/(user)/change-password')}
+      >
+        <Text style={styles.rowText}>Đổi mật khẩu</Text>
         <Ionicons name="chevron-forward" size={20} color={Colors[colorScheme].text} />
       </TouchableOpacity>
       <TouchableOpacity style={styles.row}>
         <Text style={styles.rowText}>Địa Chỉ</Text>
         <Ionicons name="chevron-forward" size={20} color={Colors[colorScheme].text} />
+
       </TouchableOpacity>
       <TouchableOpacity style={styles.row}>
         <Text style={styles.rowText}>Tài khoản / Thẻ Ngân hàng</Text>

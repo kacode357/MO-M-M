@@ -1,5 +1,4 @@
 import { Colors } from '@/constants/Colors';
-import { useAlert } from '@/contexts/AlertContext';
 import { useColorScheme } from '@/hooks/useColorScheme';
 import { CreateUserApi } from '@/services/user.services';
 import { signupStyles } from '@/styles/SignupStyles';
@@ -21,7 +20,6 @@ import {
 const Signup = () => {
   const colorScheme = useColorScheme() ?? 'light';
   const router = useRouter();
-  const { showAlert } = useAlert();
 
   const [email, setEmail] = useState('');
   const [fullName, setFullName] = useState('');
@@ -43,71 +41,47 @@ const Signup = () => {
   };
 
   const handleSignup = async () => {
-  if (!email || !fullName || !userName || !password || !confirmPassword) {
-    showAlert({
-      title: 'Lỗi',
-      message: 'Vui lòng điền đầy đủ tất cả các trường.',
-      confirmText: 'OK',
-      showCancel: false,
-    });
-    return;
-  }
+    // Client-side validation
+    if (!email || !fullName || !userName || !password || !confirmPassword) {
+      console.log('Validation error: Please fill in all fields.');
+      return;
+    }
 
-  if (!/\S+@\S+\.\S+/.test(email)) {
-    showAlert({
-      title: 'Lỗi',
-      message: 'Email không hợp lệ.',
-      confirmText: 'OK',
-      showCancel: false,
-    });
-    return;
-  }
+    if (!/\S+@\S+\.\S+/.test(email)) {
+      console.log('Validation error: Invalid email format.');
+      return;
+    }
 
-  if (!/^[a-zA-Z0-9_-]+$/.test(userName)) {
-    showAlert({
-      title: 'Lỗi',
-      message: 'Tên đăng nhập không được chứa khoảng cách hoặc ký tự đặc biệt.',
-      confirmText: 'OK',
-      showCancel: false,
-    });
-    return;
-  }
+    if (!/^[a-zA-Z0-9_-]+$/.test(userName)) {
+      console.log('Validation error: Username must not contain spaces or special characters.');
+      return;
+    }
 
-  if (password !== confirmPassword) {
-    showAlert({
-      title: 'Lỗi',
-      message: 'Mật khẩu và xác nhận mật khẩu không khớp.',
-      confirmText: 'OK',
-      showCancel: false,
-    });
-    return;
-  }
+    if (password !== confirmPassword) {
+      console.log('Validation error: Password and confirm password do not match.');
+      return;
+    }
 
-  if (password.length < 6) {
-    showAlert({
-      title: 'Lỗi',
-      message: 'Mật khẩu phải có ít nhất 6 ký tự.',
-      confirmText: 'OK',
-      showCancel: false,
-    });
-    return;
-  }
+    if (password.length < 6) {
+      console.log('Validation error: Password must be at least 6 characters.');
+      return;
+    }
 
-  setIsLoading(true);
-  try {
-    await CreateUserApi({
-      fullName,
-      email,
-      userName,
-      password,
-    });
-    router.push('/(auth)/signin');
-  } catch (error) {
-    console.error('Signup error:', error);
-  } finally {
-    setIsLoading(false);
-  }
-};
+    setIsLoading(true);
+    try {
+      await CreateUserApi({
+        fullName,
+        email,
+        userName,
+        password,
+      });
+      router.push('/(auth)/signin');
+    } catch (error) {
+      console.error('Signup error:', error);
+    } finally {
+      setIsLoading(false);
+    }
+  };
 
   useEffect(() => {
     const keyboardDidShow = (event: KeyboardEvent) => {
