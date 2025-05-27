@@ -1,4 +1,5 @@
 import logo from '@/assets/images/logo-mm-final-2.png';
+import AlertModal from '@/components/AlertModal'; // Adjust the import path as needed
 import { Colors } from '@/constants/Colors';
 import { useColorScheme } from '@/hooks/useColorScheme';
 import { GetCurrentUserApi, LoginUserApi } from '@/services/user.services';
@@ -25,6 +26,13 @@ const Signin = () => {
   const [password, setPassword] = useState('');
   const [secureTextEntry, setSecureTextEntry] = useState(true);
   const [isLoading, setIsLoading] = useState(false);
+  const [modalVisible, setModalVisible] = useState(false);
+  const [modalConfig, setModalConfig] = useState<{
+    title: string;
+    message: string;
+    isSuccess?: boolean;
+    onConfirm?: () => void;
+  }>({ title: '', message: '' });
 
   const togglePasswordVisibility = () => setSecureTextEntry(!secureTextEntry);
 
@@ -33,9 +41,22 @@ const Signin = () => {
   };
 
   const handleSignin = async () => {
-    // Client-side validation: only check if fields are filled
+    // Client-side validation
     if (!userName || !password) {
-      console.log('Validation error: Please fill in both username and password.');
+      setModalConfig({
+        title: 'Lỗi',
+        message: 'Vui lòng điền đầy đủ tên đăng nhập và mật khẩu',
+      });
+      setModalVisible(true);
+      return;
+    }
+
+    if (!/^[a-z0-9_-]+$/.test(userName)) {
+      setModalConfig({
+        title: 'Lỗi',
+        message: 'Tên đăng nhập chỉ được chứa chữ thường, số, dấu gạch dưới hoặc gạch ngang, không chứa khoảng trắng hoặc chữ hoa',
+      });
+      setModalVisible(true);
       return;
     }
 
@@ -45,7 +66,6 @@ const Signin = () => {
         userName,
         password,
       });
-      console.log('Login response:', loginResponse.data);
       const { accessToken, refreshToken } = loginResponse.data;
       await AsyncStorage.setItem('accessToken', accessToken);
       await AsyncStorage.setItem('refreshToken', refreshToken);
@@ -58,9 +78,8 @@ const Signin = () => {
       await AsyncStorage.setItem('user_email', email);
       await AsyncStorage.setItem('user_fullname', fullname);
       router.push('/(tabs)');
-    
     } catch (error) {
-      console.log('Signin error:', error);
+      setModalVisible(true);
     } finally {
       setIsLoading(false);
     }
@@ -88,6 +107,7 @@ const Signin = () => {
           value={userName}
           onChangeText={setUserName}
           autoCapitalize="none"
+          editable={!isLoading}
         />
 
         <Text style={styles.inputLabel}>Mật khẩu</Text>
@@ -100,6 +120,7 @@ const Signin = () => {
             onChangeText={setPassword}
             secureTextEntry={secureTextEntry}
             autoCapitalize="none"
+            editable={!isLoading}
           />
           <TouchableOpacity style={styles.eyeIcon} onPress={togglePasswordVisibility}>
             <Ionicons
@@ -153,6 +174,18 @@ const Signin = () => {
             <Text style={styles.signupLink}>Đăng ký tơi đây</Text>
           </TouchableOpacity>
         </View>
+
+        <AlertModal
+          visible={modalVisible}
+          title={modalConfig.title}
+          message={modalConfig.message}
+          isSuccess={modalConfig.isSuccess}
+          onConfirm={() => {
+            setModalVisible(false);
+            if (modalConfig.onConfirm) modalConfig.onConfirm();
+          }}
+          onCancel={() => setModalVisible(false)}
+        />
       </View>
     </TouchableWithoutFeedback>
   );

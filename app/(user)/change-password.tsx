@@ -3,13 +3,11 @@ import { Colors } from '@/constants/Colors';
 import { Fonts } from '@/constants/Fonts';
 import { useColorScheme } from '@/hooks/useColorScheme';
 import { ChangePasswordApi } from '@/services/user.services';
-import { useRouter } from 'expo-router';
 import React, { useState } from 'react';
 import { StyleSheet, Text, TextInput, TouchableOpacity, View } from 'react-native';
 
 const ChangePassword = () => {
   const colorScheme = useColorScheme() ?? 'light';
-  const router = useRouter();
   const [currentPassword, setCurrentPassword] = useState('');
   const [newPassword, setNewPassword] = useState('');
   const [confirmPassword, setConfirmPassword] = useState('');
@@ -24,11 +22,10 @@ const ChangePassword = () => {
 
   const handleChangePassword = async () => {
     try {
-      // Basic validation
       if (!currentPassword || !newPassword || !confirmPassword) {
         setModalConfig({
           title: 'Lỗi',
-          message: 'Vui lòng điền đầy đủ tất cả các trường',
+          message: 'Vui lòng điền đầy đủ tất cả các thông tin',
         });
         setModalVisible(true);
         return;
@@ -59,8 +56,6 @@ const ChangePassword = () => {
         oldPassword: currentPassword,
         newPassword: newPassword,
       });
-
-      
       setModalVisible(true);
     } catch (error: any) {
       setModalVisible(true);
@@ -122,8 +117,6 @@ const ChangePassword = () => {
 
   return (
     <View style={styles.container}>
-     
-
       <View style={styles.inputContainer}>
         <Text style={styles.label}>Mật khẩu hiện tại</Text>
         <TextInput

@@ -1,3 +1,4 @@
+import AlertModal from '@/components/AlertModal'; // Adjust the import path as needed
 import { Colors } from '@/constants/Colors';
 import { useColorScheme } from '@/hooks/useColorScheme';
 import { CreateUserApi } from '@/services/user.services';
@@ -29,6 +30,13 @@ const Signup = () => {
   const [secureTextEntry, setSecureTextEntry] = useState(true);
   const [secureConfirmTextEntry, setSecureConfirmTextEntry] = useState(true);
   const [isLoading, setIsLoading] = useState(false);
+  const [modalVisible, setModalVisible] = useState(false);
+  const [modalConfig, setModalConfig] = useState<{
+    title: string;
+    message: string;
+    isSuccess?: boolean;
+    onConfirm?: () => void;
+  }>({ title: '', message: '' });
 
   const scrollViewRef = useRef<ScrollView>(null);
   const [keyboardHeight, setKeyboardHeight] = useState(0);
@@ -43,27 +51,47 @@ const Signup = () => {
   const handleSignup = async () => {
     // Client-side validation
     if (!email || !fullName || !userName || !password || !confirmPassword) {
-      console.log('Validation error: Please fill in all fields.');
+      setModalConfig({
+        title: 'Lỗi',
+        message: 'Vui lòng điền đầy đủ tất cả các thông tin',
+      });
+      setModalVisible(true);
       return;
     }
 
     if (!/\S+@\S+\.\S+/.test(email)) {
-      console.log('Validation error: Invalid email format.');
+      setModalConfig({
+        title: 'Lỗi',
+        message: 'Định dạng email không hợp lệ',
+      });
+      setModalVisible(true);
       return;
     }
 
-    if (!/^[a-zA-Z0-9_-]+$/.test(userName)) {
-      console.log('Validation error: Username must not contain spaces or special characters.');
+    if (!/^[a-z0-9_-]+$/.test(userName)) {
+      setModalConfig({
+        title: 'Lỗi',
+        message: 'Tên đăng nhập chỉ được chứa chữ thường, số, dấu gạch dưới hoặc gạch ngang, không chứa khoảng trắng hoặc chữ hoa',
+      });
+      setModalVisible(true);
       return;
     }
 
     if (password !== confirmPassword) {
-      console.log('Validation error: Password and confirm password do not match.');
+      setModalConfig({
+        title: 'Lỗi',
+        message: 'Mật khẩu và xác nhận mật khẩu không khớp',
+      });
+      setModalVisible(true);
       return;
     }
 
     if (password.length < 6) {
-      console.log('Validation error: Password must be at least 6 characters.');
+      setModalConfig({
+        title: 'Lỗi',
+        message: 'Mật khẩu phải có ít nhất 6 ký tự',
+      });
+      setModalVisible(true);
       return;
     }
 
@@ -135,6 +163,7 @@ const Signup = () => {
           onChangeText={setEmail}
           keyboardType="email-address"
           autoCapitalize="none"
+          editable={!isLoading}
         />
 
         <Text style={styles.inputLabel}>Họ tên của bạn</Text>
@@ -145,6 +174,7 @@ const Signup = () => {
           value={fullName}
           onChangeText={setFullName}
           autoCapitalize="words"
+          editable={!isLoading}
         />
 
         <Text style={styles.inputLabel}>Tên đăng nhập</Text>
@@ -155,6 +185,7 @@ const Signup = () => {
           value={userName}
           onChangeText={setUserName}
           autoCapitalize="none"
+          editable={!isLoading}
         />
 
         <Text style={styles.inputLabel}>Mật khẩu</Text>
@@ -167,6 +198,7 @@ const Signup = () => {
             onChangeText={setPassword}
             secureTextEntry={secureTextEntry}
             autoCapitalize="none"
+            editable={!isLoading}
           />
           <TouchableOpacity style={styles.eyeIcon} onPress={togglePasswordVisibility}>
             <Ionicons
@@ -187,6 +219,7 @@ const Signup = () => {
             onChangeText={setConfirmPassword}
             secureTextEntry={secureConfirmTextEntry}
             autoCapitalize="none"
+            editable={!isLoading}
           />
           <TouchableOpacity style={styles.eyeIcon} onPress={toggleConfirmPasswordVisibility}>
             <Ionicons
@@ -226,6 +259,18 @@ const Signup = () => {
             <Text style={styles.loginLink}>Đăng nhập tơi đây</Text>
           </TouchableOpacity>
         </View>
+
+        <AlertModal
+          visible={modalVisible}
+          title={modalConfig.title}
+          message={modalConfig.message}
+          isSuccess={modalConfig.isSuccess}
+          onConfirm={() => {
+            setModalVisible(false);
+            if (modalConfig.onConfirm) modalConfig.onConfirm();
+          }}
+          onCancel={() => setModalVisible(false)}
+        />
       </ScrollView>
     </KeyboardAvoidingView>
   );

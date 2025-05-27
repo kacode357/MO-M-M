@@ -2,14 +2,12 @@ import logo from '@/assets/images/logo-mm-final-2.png';
 import { Colors } from '@/constants/Colors';
 import { Fonts } from '@/constants/Fonts';
 import { useColorScheme } from '@/hooks/useColorScheme';
-import Constants from 'expo-constants';
 import { useRouter } from 'expo-router';
 import React from 'react';
 import { Image, StyleSheet, Text, TouchableOpacity, View } from 'react-native';
 
 // Fallback version if EXPO_PUBLIC_APP_VERSION is not defined
-const APP_VERSION = Constants.expoConfig?.extra?.appVersion || '1.0.0';
-
+const APP_VERSION = process.env.EXPO_PUBLIC_APP_VERSION
 const WelcomePage = () => {
   const colorScheme = useColorScheme() ?? 'light';
   const router = useRouter();

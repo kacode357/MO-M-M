@@ -29,8 +29,8 @@ export const Colors = {
     primaryText: '#FF9500', // New: Orange text color
     blackText: '#000000', // New: Black text color
     whiteText: '#FFFFFF', // New: White text color  
-    safeAreaBackground: '#2C2C2E',
-    grayBackground: '#3A3A3C', // New: Slightly darker gray background
+     safeAreaBackground: '#F5F5F5',
+    grayBackground: '#E0E0E0', // New: Slightly darker gray background
     success: '#28a745',
     error: '#dc3545',
   },
