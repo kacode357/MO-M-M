@@ -79,7 +79,7 @@ const Signin = () => {
       await AsyncStorage.setItem('user_fullname', fullname);
       router.push('/(tabs)');
     } catch (error) {
-      setModalVisible(true);
+       console.error('Signup error:', error);
     } finally {
       setIsLoading(false);
     }
@@ -171,7 +171,7 @@ const Signin = () => {
         <View style={styles.signupLinkContainer}>
           <Text style={styles.signupText}>Bạn chưa có tài khoản? </Text>
           <TouchableOpacity onPress={() => router.push('/(auth)/signup')}>
-            <Text style={styles.signupLink}>Đăng ký tơi đây</Text>
+            <Text style={styles.signupLink}>Đăng ký tại đây</Text>
           </TouchableOpacity>
         </View>
 

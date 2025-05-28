@@ -49,67 +49,77 @@ const Signup = () => {
   };
 
   const handleSignup = async () => {
-    // Client-side validation
-    if (!email || !fullName || !userName || !password || !confirmPassword) {
-      setModalConfig({
-        title: 'Lỗi',
-        message: 'Vui lòng điền đầy đủ tất cả các thông tin',
-      });
-      setModalVisible(true);
-      return;
-    }
+  // Client-side validation
+  if (!email || !fullName || !userName || !password || !confirmPassword) {
+    setModalConfig({
+      title: 'Lỗi',
+      message: 'Vui lòng điền đầy đủ tất cả các thông tin',
+    });
+    setModalVisible(true);
+    return;
+  }
 
-    if (!/\S+@\S+\.\S+/.test(email)) {
-      setModalConfig({
-        title: 'Lỗi',
-        message: 'Định dạng email không hợp lệ',
-      });
-      setModalVisible(true);
-      return;
-    }
+  if (!/\S+@\S+\.\S+/.test(email)) {
+    setModalConfig({
+      title: 'Lỗi',
+      message: 'Định dạng email không hợp lệ',
+    });
+    setModalVisible(true);
+    return;
+  }
 
-    if (!/^[a-z0-9_-]+$/.test(userName)) {
-      setModalConfig({
-        title: 'Lỗi',
-        message: 'Tên đăng nhập chỉ được chứa chữ thường, số, dấu gạch dưới hoặc gạch ngang, không chứa khoảng trắng hoặc chữ hoa',
-      });
-      setModalVisible(true);
-      return;
-    }
+  if (!/^[a-z0-9_-]+$/.test(userName)) {
+    setModalConfig({
+      title: 'Lỗi',
+      message: 'Tên đăng nhập chỉ được chứa chữ thường, số, dấu gạch dưới hoặc gạch ngang, không chứa khoảng trắng hoặc chữ hoa',
+    });
+    setModalVisible(true);
+    return;
+  }
 
-    if (password !== confirmPassword) {
-      setModalConfig({
-        title: 'Lỗi',
-        message: 'Mật khẩu và xác nhận mật khẩu không khớp',
-      });
-      setModalVisible(true);
-      return;
-    }
+  if (password !== confirmPassword) {
+    setModalConfig({
+      title: 'Lỗi',
+      message: 'Mật khẩu và xác nhận mật khẩu không khớp',
+    });
+    setModalVisible(true);
+    return;
+  }
 
-    if (password.length < 6) {
-      setModalConfig({
-        title: 'Lỗi',
-        message: 'Mật khẩu phải có ít nhất 6 ký tự',
-      });
-      setModalVisible(true);
-      return;
-    }
+  if (password.length < 6) {
+    setModalConfig({
+      title: 'Lỗi',
+      message: 'Mật khẩu phải có ít nhất 6 ký tự',
+    });
+    setModalVisible(true);
+    return;
+  }
 
-    setIsLoading(true);
-    try {
-      await CreateUserApi({
-        fullName,
-        email,
-        userName,
-        password,
-      });
-      router.push('/(auth)/signin');
-    } catch (error) {
-      console.error('Signup error:', error);
-    } finally {
-      setIsLoading(false);
-    }
-  };
+  // New password validation
+  if (!/^(?=.*[a-z])(?=.*[A-Z])(?=.*\d)(?=.*[@$!%*?&;])[A-Za-z\d@$!%*?&;]+$/.test(password)) {
+    setModalConfig({
+      title: 'Lỗi',
+      message: 'Mật khẩu phải chứa ít nhất một chữ cái viết hoa, một chữ cái viết thường, một số và một ký tự đặc biệt',
+    });
+    setModalVisible(true);
+    return;
+  }
+
+  setIsLoading(true);
+  try {
+    await CreateUserApi({
+      fullName,
+      email,
+      userName,
+      password,
+    });
+    router.push('/(auth)/signin');
+  } catch (error) {
+    console.error('Signup error:', error);
+  } finally {
+    setIsLoading(false);
+  }
+};
 
   useEffect(() => {
     const keyboardDidShow = (event: KeyboardEvent) => {
@@ -237,7 +247,7 @@ const Signup = () => {
           <TouchableOpacity onPress={() => {/* Navigate to terms */}}>
             <Text style={styles.termsLink}>điều khoản và điều kiện</Text>
           </TouchableOpacity>
-          <Text style={styles.termsText}> của Măm</Text>
+          <Text style={styles.termsText}> của Măm Map</Text>
         </View>
 
         <TouchableOpacity
@@ -256,7 +266,7 @@ const Signup = () => {
         <View style={styles.loginLinkContainer}>
           <Text style={styles.loginText}>Bạn đã có tài khoản? </Text>
           <TouchableOpacity onPress={() => router.push('/(auth)/signin')}>
-            <Text style={styles.loginLink}>Đăng nhập tơi đây</Text>
+            <Text style={styles.loginLink}>Đăng nhập tại đây</Text>
           </TouchableOpacity>
         </View>
 

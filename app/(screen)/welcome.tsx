@@ -28,8 +28,8 @@ const WelcomePage = () => {
     },
     title: {
       fontFamily: Fonts.Baloo2.ExtraBold,
-      fontSize: 36, // Reduced from 53
-      lineHeight: 36 * 1.3, // Adjusted
+      fontSize: 60, // Reduced from 53
+      lineHeight: 55 * 1.3, // Adjusted
       letterSpacing: -0.02 * 36, // Adjusted
       color: Colors[colorScheme].primaryText,
       textAlign: 'left',
@@ -37,7 +37,7 @@ const WelcomePage = () => {
     },
     subtitle: {
       fontFamily: Fonts.Baloo2.Bold,
-      fontSize: 24, // Reduced from 32
+      fontSize: 25, // Reduced from 32
       lineHeight: 28, // Adjusted
       letterSpacing: -0.02 * 24, // Adjusted
       color: Colors[colorScheme].primaryText,
@@ -48,10 +48,10 @@ const WelcomePage = () => {
       color: Colors[colorScheme].tabIconSelected,
     },
     logo: {
-      width: 180, // Reduced for proportionality
-      height: 135, // Adjusted
+      width: 250, // Reduced for proportionality
+      height: 250, // Adjusted
       resizeMode: 'contain',
-      marginBottom: 30,
+    
     },
     loginButton: {
       width: 250, // Aligned with other components
