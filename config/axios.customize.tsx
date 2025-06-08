@@ -46,11 +46,6 @@ const defaultAxiosInstance: AxiosInstance = createAxiosInstance(
 // Response interceptor for defaultAxiosInstance
 defaultAxiosInstance.interceptors.response.use(
   (response: AxiosResponse<ApiResponse>) => {
-    // console.log(
-    //   `defaultAxiosInstance success response for ${response.config.url}:`,
-    //   response.data
-    // );
-    // Show success toast when API succeeds
     if (response.data.message) {
       Toast.show({
         type: "success",
@@ -59,7 +54,7 @@ defaultAxiosInstance.interceptors.response.use(
         position: "top",
       });
     }
-    return response; // Return the entire response object
+    return response;
   },
   (err: AxiosError<ApiResponse>) => {
     const { response } = err;
@@ -67,7 +62,6 @@ defaultAxiosInstance.interceptors.response.use(
       `defaultAxiosInstance error response for ${err.config?.url}:`,
       response?.data || err.message
     );
-    // Show error toast when API fails
     if (response?.data?.message) {
       Toast.show({
         type: "error",
@@ -95,11 +89,6 @@ const skipNotiAxiosInstance: AxiosInstance = createAxiosInstance(
 // Response interceptor for skipNotiAxiosInstance
 skipNotiAxiosInstance.interceptors.response.use(
   (response: AxiosResponse<ApiResponse>) => {
-    // console.log(
-    //   `skipNotiAxiosInstance success response for ${response.config.url}:`,
-    //   response.data
-    // );
-    // No success toast; just return the response
     return response;
   },
   (err: AxiosError<ApiResponse>) => {
@@ -108,7 +97,6 @@ skipNotiAxiosInstance.interceptors.response.use(
       `skipNotiAxiosInstance error response for ${err.config?.url}:`,
       response?.data || err.message
     );
-    // Show error toast when API fails
     if (response?.data?.message) {
       Toast.show({
         type: "error",
@@ -128,4 +116,25 @@ skipNotiAxiosInstance.interceptors.response.use(
   }
 );
 
-export { defaultAxiosInstance, skipNotiAxiosInstance };
+// Skip All Notifications Axios instance (skips both success and error toasts)
+const skipAllNotiAxiosInstance: AxiosInstance = createAxiosInstance(
+  "https://mammap-dxapa6h5c2ctd9hz.southeastasia-01.azurewebsites.net"
+);
+
+// Response interceptor for skipAllNotiAxiosInstance
+skipAllNotiAxiosInstance.interceptors.response.use(
+  (response: AxiosResponse<ApiResponse>) => {
+    return response;
+  },
+  (err: AxiosError<ApiResponse>) => {
+    const { response } = err;
+    console.error(
+      `skipAllNotiAxiosInstance error response for ${err.config?.url}:`,
+      response?.data || err.message
+    );
+    return Promise.reject(err);
+  }
+);
+
+export { defaultAxiosInstance, skipAllNotiAxiosInstance, skipNotiAxiosInstance };
+

@@ -16,9 +16,9 @@ export const signinStyles = (colorScheme: 'light' | 'dark' = 'light', isLoading:
       marginBottom: 20,
     },
     logo: {
-      width: 220,
+      width: 250,
       height: 150,
-   
+      
     },
     textContainer: {
       alignItems: 'flex-start',

@@ -91,9 +91,14 @@ export default function RootLayout() {
     { name: '(tabs)', options: { headerShown: false } },
     { name: '(screen)/welcome', options: { headerShown: false } },
     { name: '(auth)/signin', options: commonHeaderOptions },
+    { name: '(auth)/merchant', options: commonHeaderOptions },
+ 
     { name: '(auth)/signup', options: { headerShown: false } },
     { name: '(auth)/forgot-password', options: commonHeaderOptions },
     { name: '(auth)/verify-otp', options: commonHeaderOptions },
+    { name: '(snack-place)/snack-place-detail',  options: { headerShown: false } },
+    { name: '(snack-place)/review',  options: { headerShown: false } },
+     { name: '(snack-place)/comments',  options: { headerShown: false } },
     {
       name: '(user)/settings',
       options: {

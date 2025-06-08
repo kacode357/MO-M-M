@@ -53,7 +53,7 @@ const ChangePassword = () => {
     setNewPassword('');
     setConfirmPassword('');
     setIsLoading(false);
-    Alert.alert('Thành công', 'Đổi mật khẩu thành công');
+ 
   };
 
   const styles = StyleSheet.create({

@@ -10,6 +10,7 @@ export const Colors = {
     tabIconDefault: '#FFFFFF', // Inactive tab icon color
     tabIconSelected: '#FFE001', // Active tab icon color
     tabBackground: '#FF9500', // Orange background for tabs
+    yellowText: '#FFE001', // New: Yellow color
     primaryText: '#FF9500', // New: Orange text color
     blackText: '#000000', // New: Black text color
     whiteText: '#FFFFFF', // New: White text color
@@ -26,6 +27,7 @@ export const Colors = {
     tabIconDefault: '#FFFFFF', // Inactive tab icon color
     tabIconSelected: '#FFE001', // Active tab icon color
     tabBackground: '#FF9500', // Orange background for tabs
+    yellowText: '#FFE001', // New: Yellow color
     primaryText: '#FF9500', // New: Orange text color
     blackText: '#000000', // New: Black text color
     whiteText: '#FFFFFF', // New: White text color  
