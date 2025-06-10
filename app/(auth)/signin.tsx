@@ -1,5 +1,5 @@
 import logo from '@/assets/images/logo-mm-final-2.png';
-import AlertModal from '@/components/AlertModal'; // Adjust the import path as needed
+import AlertModal from '@/components/AlertModal';
 import { Colors } from '@/constants/Colors';
 import { useColorScheme } from '@/hooks/useColorScheme';
 import { GetCurrentUserApi, LoginUserApi } from '@/services/user.services';
@@ -41,7 +41,6 @@ const Signin = () => {
   };
 
   const handleSignin = async () => {
-    // Client-side validation
     if (!userName || !password) {
       setModalConfig({
         title: 'Lỗi',
@@ -62,16 +61,24 @@ const Signin = () => {
 
     setIsLoading(true);
     try {
-      const loginResponse = await LoginUserApi({
-        userName,
-        password,
-      });
+      const loginResponse = await LoginUserApi({ userName, password });
       const { accessToken, refreshToken } = loginResponse.data;
       await AsyncStorage.setItem('accessToken', accessToken);
       await AsyncStorage.setItem('refreshToken', refreshToken);
       const userResponse = await GetCurrentUserApi();
-      const { premium, id, userName: userNameResponse, email, fullname } = userResponse.data;
+      
+      // Check first role in roles array
+      console.log('User roles:', userResponse.data.roles[0]);
+      if (userResponse.data.roles[0] !== 'User') {
+        setModalConfig({
+          title: 'Lỗi Quyền Truy Cập',
+          message: 'Chỉ người dùng mới có thể sử dụng tính năng này.',
+        });
+        setModalVisible(true);
+        return;
+      }
 
+      const { premium, id, userName: userNameResponse, email, fullname } = userResponse.data;
       await AsyncStorage.setItem('user_premium', JSON.stringify(premium));
       await AsyncStorage.setItem('user_id', id);
       await AsyncStorage.setItem('user_name', userNameResponse);
@@ -79,13 +86,17 @@ const Signin = () => {
       await AsyncStorage.setItem('user_fullname', fullname);
       router.push('/(tabs)');
     } catch (error) {
-       console.error('Signup error:', error);
+      console.error('Signin error:', error);
+      setModalConfig({
+        title: 'Lỗi',
+        message: 'Đăng nhập thất bại. Vui lòng kiểm tra lại thông tin.',
+      });
+      setModalVisible(true);
     } finally {
       setIsLoading(false);
     }
   };
 
-  // Generate styles with colorScheme and isLoading
   const styles = signinStyles(colorScheme, isLoading);
 
   return (

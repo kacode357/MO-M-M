@@ -1,12 +1,36 @@
-import React from 'react'
-import { Text, View } from 'react-native'
+import { ThemedText } from '@/components/ThemedText';
+import { ThemedView } from '@/components/ThemedView';
+import { Colors } from '@/constants/Colors';
+import { useColorScheme } from '@/hooks/useColorScheme';
+import React from 'react';
+import { StyleSheet } from 'react-native';
 
-const community = () => {
+const Community = () => {
+  const colorScheme = useColorScheme() ?? 'light';
+
   return (
-    <View>
-      <Text>community</Text>
-    </View>
-  )
-}
+    <ThemedView style={styles.container}>
+      <ThemedText type="title">Tính năng đang phát triển</ThemedText>
+      <ThemedText style={styles.message}>
+        Màn hình Cộng đồng đang được phát triển. Vui lòng chờ trong thời gian tới!
+      </ThemedText>
+    </ThemedView>
+  );
+};
 
-export default community
+const styles = StyleSheet.create({
+  container: {
+    flex: 1,
+    justifyContent: 'center',
+    alignItems: 'center',
+    padding: 20,
+    backgroundColor: Colors.light.background,
+  },
+  message: {
+    fontSize: 16,
+    textAlign: 'center',
+    marginTop: 16,
+  },
+});
+
+export default Community;

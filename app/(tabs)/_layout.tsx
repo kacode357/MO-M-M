@@ -18,30 +18,28 @@ export default function TabLayout() {
       <View style={styles.tabContainer}>
         <Tabs
           screenOptions={{
-            tabBarActiveTintColor: Colors[colorScheme].tabIconSelected, // #FFE001 for active tab
-            tabBarInactiveTintColor: Colors[colorScheme].tabIconDefault, // #FFFFFF for inactive tab
+            tabBarActiveTintColor: Colors[colorScheme].tabIconSelected,
+            tabBarInactiveTintColor: Colors[colorScheme].tabIconDefault,
             headerShown: false,
             tabBarButton: HapticTab,
             tabBarBackground: TabBarBackground,
             tabBarStyle: Platform.select({
               ios: {
                 position: 'absolute',
-                backgroundColor: 'transparent', // Transparency for blur effect
-                borderTopWidth: 0, // No top border
-                height: 90, // Increased height to accommodate icons
-                paddingBottom: 10, // Padding for home indicator
-                borderTopLeftRadius: 10, // Round top-left corner
-                borderTopRightRadius: 10, // Round top-right corner
+                backgroundColor: 'transparent',
+                borderTopWidth: 0,
+                height: 90,
+                paddingBottom: 10,
+                borderTopLeftRadius: 10,
+                borderTopRightRadius: 10,
               },
               android: {
-                backgroundColor: Colors[colorScheme].tabBackground, // Keep original color
+                backgroundColor: Colors[colorScheme].tabBackground,
                 borderTopWidth: 0,
-                height: 55, // Adjusted height for Android
-                paddingBottom: 16, // Increased padding to avoid navigation bar
-               
-                borderTopLeftRadius: 10, // Round top-left corner
-                borderTopRightRadius: 10, // Round top-right corner
-             
+                height: 55,
+                paddingBottom: 16,
+                borderTopLeftRadius: 10,
+                borderTopRightRadius: 10,
               },
             }),
             tabBarLabelStyle: {
@@ -59,19 +57,6 @@ export default function TabLayout() {
               tabBarIcon: ({ color, focused }) => (
                 <Entypo
                   name="home"
-                  size={26}
-                  color={focused ? Colors[colorScheme].tabIconSelected : Colors[colorScheme].tabIconDefault}
-                />
-              ),
-            }}
-          />
-          <Tabs.Screen
-            name="map"
-            options={{
-              title: 'Bản đồ',
-              tabBarIcon: ({ color, focused }) => (
-                <Entypo
-                  name="map"
                   size={26}
                   color={focused ? Colors[colorScheme].tabIconSelected : Colors[colorScheme].tabIconDefault}
                 />
@@ -126,10 +111,10 @@ export default function TabLayout() {
 const styles = StyleSheet.create({
   container: {
     flex: 1,
-    backgroundColor: '#FFFFFF', // White background for container
+    backgroundColor: '#FFFFFF',
   },
   tabContainer: {
     flex: 1,
-    backgroundColor: '#FFFFFF', // White background for tab area
+    backgroundColor: '#FFFFFF',
   },
 });
