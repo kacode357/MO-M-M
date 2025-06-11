@@ -1,8 +1,9 @@
+import AlertModal from '@/components/AlertModal';
 import { ThemedText } from '@/components/ThemedText';
 import { ThemedView } from '@/components/ThemedView';
 import { Colors } from '@/constants/Colors';
 import { Fonts } from '@/constants/Fonts';
-import { getReviewsBySnackPlaceId, recommendReview } from '@/services/review.services';
+import { deleteReview, getReviewsBySnackPlaceId, recommendReview } from '@/services/review.services';
 import { Ionicons } from '@expo/vector-icons';
 import AsyncStorage from '@react-native-async-storage/async-storage';
 import { Image } from 'expo-image';
@@ -34,6 +35,9 @@ const Comments = () => {
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
   const [currentUserId, setCurrentUserId] = useState<string | null>(null);
+  const [deletingId, setDeletingId] = useState<string | null>(null);
+  const [showDeleteModal, setShowDeleteModal] = useState<boolean>(false);
+  const [reviewIdToDelete, setReviewIdToDelete] = useState<string | null>(null);
 
   const fetchUserId = async () => {
     try {
@@ -51,7 +55,6 @@ const Comments = () => {
     setError(null);
     try {
       const response = await getReviewsBySnackPlaceId(id, userId || '');
-      console.log('Fetch reviews response:', response);
       if (response.status === 200 && response.data) {
         setReviews(response.data);
       } else {
@@ -70,11 +73,6 @@ const Comments = () => {
       return;
     }
     try {
-      console.log('Sending recommend request:', {
-        reviewId,
-        currentUserId,
-        payload: { params: { reviewId, userId: currentUserId } },
-      });
       const response = await recommendReview(reviewId, currentUserId);
       if (response.status === 200) {
         setReviews(prevReviews =>
@@ -96,6 +94,36 @@ const Comments = () => {
     } catch (err) {
       setError('Đã xảy ra lỗi khi gửi khuyến nghị.');
     }
+  };
+
+  const handleDelete = (reviewId: string) => {
+    if (!currentUserId) {
+      setError('Vui lòng đăng nhập để xóa đánh giá.');
+      return;
+    }
+    setReviewIdToDelete(reviewId);
+    setShowDeleteModal(true);
+  };
+
+  const confirmDelete = async () => {
+    if (!reviewIdToDelete) return;
+
+    setDeletingId(reviewIdToDelete);
+    try {
+      await deleteReview(reviewIdToDelete);
+      setReviews(prevReviews => prevReviews.filter(review => review.id !== reviewIdToDelete));
+      setShowDeleteModal(false);
+    } catch (error: any) {
+      setError(error.message || 'Không thể xóa đánh giá. Vui lòng thử lại.');
+    } finally {
+      setDeletingId(null);
+      setReviewIdToDelete(null);
+    }
+  };
+
+  const cancelDelete = () => {
+    setShowDeleteModal(false);
+    setReviewIdToDelete(null);
   };
 
   useEffect(() => {
@@ -143,7 +171,22 @@ const Comments = () => {
             <ThemedText style={styles.comment}>{item.comment || 'Không có bình luận'}</ThemedText>
           </View>
         </View>
-        <ThemedText style={styles.date}>{formatDate(item.date)}</ThemedText>
+        <View style={styles.headerRight}>
+          <ThemedText style={styles.date}>{formatDate(item.date)}</ThemedText>
+          {item.userId === currentUserId && (
+            <TouchableOpacity
+              onPress={() => handleDelete(item.id)}
+              disabled={deletingId === item.id}
+              style={styles.deleteButton}
+            >
+              <Ionicons
+                name="trash-outline"
+                size={20}
+                color={deletingId === item.id ? Colors.light.icon : Colors.light.error}
+              />
+            </TouchableOpacity>
+          )}
+        </View>
       </View>
       <View style={styles.ratingsContainer}>
         <View style={styles.ratingRow}>
@@ -253,6 +296,16 @@ const Comments = () => {
           contentContainerStyle={styles.listContainer}
         />
       )}
+      <AlertModal
+        visible={showDeleteModal}
+        title="Xác nhận"
+        message="Bạn có chắc chắn muốn xóa đánh giá này?"
+        showCancel={true}
+        cancelText="Hủy"
+        confirmText="Xóa"
+        onCancel={cancelDelete}
+        onConfirm={confirmDelete}
+      />
     </ThemedView>
   );
 };
@@ -292,13 +345,17 @@ const styles = StyleSheet.create({
   reviewHeader: {
     flexDirection: 'row',
     justifyContent: 'space-between',
-    alignItems: 'flex-start',
+    alignItems: 'center',
     marginBottom: 10,
   },
   userInfo: {
     flexDirection: 'row',
     alignItems: 'flex-start',
     flex: 1,
+  },
+  headerRight: {
+    flexDirection: 'row',
+    alignItems: 'center',
   },
   avatarIcon: {
     marginRight: 8,
@@ -322,7 +379,10 @@ const styles = StyleSheet.create({
     fontSize: 12,
     color: Colors.light.icon,
     marginLeft: 10,
-    textAlign: 'right',
+  },
+  deleteButton: {
+    padding: 5,
+    marginLeft: 10,
   },
   ratingsContainer: { marginBottom: 10 },
   ratingRow: {

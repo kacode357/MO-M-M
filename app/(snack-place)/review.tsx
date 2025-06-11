@@ -1,3 +1,4 @@
+import AlertModal from '@/components/AlertModal';
 import { ThemedText } from '@/components/ThemedText';
 import { ThemedView } from '@/components/ThemedView';
 import { Colors } from '@/constants/Colors';
@@ -8,7 +9,7 @@ import { Ionicons } from '@expo/vector-icons';
 import AsyncStorage from '@react-native-async-storage/async-storage';
 import { router, useLocalSearchParams } from 'expo-router';
 import { useState } from 'react';
-import { ActivityIndicator, Alert, Image, RefreshControl, StyleSheet, TextInput, TouchableOpacity, View } from 'react-native';
+import { ActivityIndicator, Image, RefreshControl, StyleSheet, TextInput, TouchableOpacity, View } from 'react-native';
 import { GestureHandlerRootView, ScrollView } from 'react-native-gesture-handler';
 
 const Review = () => {
@@ -22,6 +23,10 @@ const Review = () => {
   const [comment, setComment] = useState<string>('');
   const [isUploading, setIsUploading] = useState<boolean>(false);
   const [refreshing, setRefreshing] = useState<boolean>(false);
+  const [showAlertModal, setShowAlertModal] = useState<boolean>(false);
+  const [alertTitle, setAlertTitle] = useState<string>('');
+  const [alertMessage, setAlertMessage] = useState<string>('');
+  const [isSubmissionSuccess, setIsSubmissionSuccess] = useState<boolean>(false);
 
   const handleStarPress = (
     rating: number,
@@ -38,12 +43,10 @@ const Review = () => {
   };
 
   const handleSubmit = async () => {
-    // Prevent submission if image is uploading
     if (isUploading) {
       return;
     }
 
-    // Validate ratings and comment
     if (
       !tasteRating ||
       !priceRating ||
@@ -52,14 +55,20 @@ const Review = () => {
       !convenienceRating ||
       !comment.trim()
     ) {
-      Alert.alert('Lỗi', 'Vui lòng chọn số sao cho tất cả hạng mục và nhập nhận xét.');
+      setAlertTitle('Lỗi');
+      setAlertMessage('Vui lòng chọn số sao cho tất cả hạng mục và nhập nhận xét.');
+      setIsSubmissionSuccess(false);
+      setShowAlertModal(true);
       return;
     }
 
     try {
       const userId = await AsyncStorage.getItem('user_id');
       if (!userId) {
-        Alert.alert('Lỗi', 'Không tìm thấy thông tin người dùng. Vui lòng đăng nhập lại.');
+        setAlertTitle('Lỗi');
+        setAlertMessage('Không tìm thấy thông tin người dùng. Vui lòng đăng nhập lại.');
+        setIsSubmissionSuccess(false);
+        setShowAlertModal(true);
         return;
       }
 
@@ -74,15 +83,27 @@ const Review = () => {
         image: image.trim() || '',
         comment,
       };
-      console.log('Review data:', reviewData);
       await createReview(reviewData);
 
+      setAlertTitle('Thành công');
+      setAlertMessage('Đánh giá của bạn đã được gửi thành công!');
+      setIsSubmissionSuccess(true);
+      setShowAlertModal(true);
+    } catch (error: any) {
+      setAlertTitle('Lỗi');
+      setAlertMessage(error.message || 'Không thể gửi đánh giá. Vui lòng thử lại.');
+      setIsSubmissionSuccess(false);
+      setShowAlertModal(true);
+    }
+  };
+
+  const handleAlertConfirm = () => {
+    setShowAlertModal(false);
+    if (isSubmissionSuccess) {
       router.push({
         pathname: '/snack-place-detail',
         params: { snackPlaceId },
       });
-    } catch (error: any) {
-      Alert.alert('Lỗi', error.message || 'Không thể gửi đánh giá. Vui lòng thử lại.');
     }
   };
 
@@ -129,9 +150,9 @@ const Review = () => {
     <GestureHandlerRootView style={{ flex: 1 }}>
       <ThemedView style={styles.container}>
         <View style={styles.header}>
-            <TouchableOpacity style={styles.backButton} onPress={() => router.push('/(tabs)')}>
+          <TouchableOpacity style={styles.backButton} onPress={() => router.push('/(tabs)')}>
             <Ionicons name="arrow-back" size={24} color={Colors.light.whiteText} />
-            </TouchableOpacity>
+          </TouchableOpacity>
           <ThemedText style={styles.title}>Đánh giá quán</ThemedText>
         </View>
         <ScrollView
@@ -185,6 +206,14 @@ const Review = () => {
             <ThemedText style={styles.submitButtonText}>Gửi đánh giá</ThemedText>
           </TouchableOpacity>
         </ScrollView>
+        <AlertModal
+          visible={showAlertModal}
+          title={alertTitle}
+          message={alertMessage}
+          isSuccess={isSubmissionSuccess}
+          confirmText="OK"
+          onConfirm={handleAlertConfirm}
+        />
       </ThemedView>
     </GestureHandlerRootView>
   );

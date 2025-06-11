@@ -22,5 +22,11 @@ const recommendReview = async (reviewId: string, userId: string) => {
     });
     return response.data;
 };
-export { createReview, getAverageRate, getReviewsBySnackPlaceId, recommendReview };
+const deleteReview = async (reviewId: string) => {
+    const response = await defaultAxiosInstance.delete(`/api/reviews/delete`, {
+        params: { id: reviewId },
+    });
+    return response.data;
+};
+export { createReview, deleteReview, getAverageRate, getReviewsBySnackPlaceId, recommendReview };
 
