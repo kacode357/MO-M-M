@@ -6,6 +6,7 @@ import AntDesign from '@expo/vector-icons/AntDesign';
 import Entypo from '@expo/vector-icons/Entypo';
 import FontAwesome from '@expo/vector-icons/FontAwesome';
 import FontAwesome5 from '@expo/vector-icons/FontAwesome5';
+import MaterialIcons from '@expo/vector-icons/MaterialIcons'; // For map tab icon
 import { Tabs } from 'expo-router';
 import React from 'react';
 import { Platform, StyleSheet, View } from 'react-native';
@@ -75,6 +76,21 @@ export default function TabLayout() {
                 />
               ),
             }}
+            
+          />
+            {/* Map tab for navigation to map.tsx route */}
+          <Tabs.Screen
+            name="map"
+            options={{
+              title: 'Bản đồ',
+              tabBarIcon: ({ color, focused }) => (
+                <MaterialIcons
+                  name="map"
+                  size={26}
+                  color={focused ? Colors[colorScheme].tabIconSelected : Colors[colorScheme].tabIconDefault}
+                />
+              ),
+            }}
           />
           <Tabs.Screen
             name="help"
@@ -102,6 +118,7 @@ export default function TabLayout() {
               ),
             }}
           />
+        
         </Tabs>
       </View>
     </View>
