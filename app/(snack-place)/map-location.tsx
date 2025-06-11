@@ -1,17 +1,17 @@
 import AlertModal from '@/components/AlertModal';
 import { Colors } from '@/constants/Colors';
 import { Fonts } from '@/constants/Fonts';
+import { Ionicons } from '@expo/vector-icons';
 import axios from 'axios';
 import * as Location from 'expo-location';
+import { router, useLocalSearchParams } from 'expo-router';
 import React, { useEffect, useState } from 'react';
 import {
-  ActivityIndicator,
-  Keyboard,
-  StyleSheet,
-  Text,
-  TextInput,
-  TouchableOpacity,
-  View
+    ActivityIndicator,
+    StyleSheet,
+    Text,
+    TouchableOpacity,
+    View
 } from 'react-native';
 import MapView, { Marker, Polyline } from 'react-native-maps';
 
@@ -19,10 +19,11 @@ import MapView, { Marker, Polyline } from 'react-native-maps';
 const ORS_API_KEY = '5b3ce3597851110001cf6248c89e354a30184841becfff9d2f7b69a4';
 
 const MapScreen = () => {
+  const { address } = useLocalSearchParams();
+  console.log('Address from params:', address);
   const [location, setLocation] = useState<{ latitude: number; longitude: number } | null>(null);
   const [destination, setDestination] = useState<{ latitude: number; longitude: number } | null>(null);
   const [routeCoords, setRouteCoords] = useState<{ latitude: number; longitude: number }[]>([]);
-  const [searchQuery, setSearchQuery] = useState('');
   const [loading, setLoading] = useState(true);
   const [searchLoading, setSearchLoading] = useState(false);
   const [modalVisible, setModalVisible] = useState(false);
@@ -74,6 +75,12 @@ const MapScreen = () => {
 
     fetchLocation();
   }, []);
+
+  useEffect(() => {
+    if (location && typeof address === 'string' && address.trim()) {
+      handleSearch(address);
+    }
+  }, [location, address]);
 
   const geocodeWithOSM = async (query: string) => {
     try {
@@ -135,12 +142,11 @@ const MapScreen = () => {
     }
   };
 
-  const handleSearch = async () => {
-    if (!searchQuery.trim() || !location) return;
+  const handleSearch = async (query: string) => {
+    if (!query.trim() || !location) return;
 
-    Keyboard.dismiss();
     setSearchLoading(true);
-    const dest = await geocodeWithOSM(searchQuery);
+    const dest = await geocodeWithOSM(query);
     if (dest) {
       setDestination(dest);
       await getRouteFromORS(location, dest);
@@ -184,7 +190,7 @@ const MapScreen = () => {
         {destination && (
           <Marker
             coordinate={destination}
-            title="Điểm đến"
+            title="Quán ăn"
             pinColor={Colors.light.success}
           />
         )}
@@ -197,18 +203,9 @@ const MapScreen = () => {
         )}
       </MapView>
 
-      <View style={styles.searchBox}>
-        <TextInput
-          placeholder="Nhập địa điểm (ví dụ: Hồ Gươm)"
-          placeholderTextColor={Colors.light.icon}
-          value={searchQuery}
-          onChangeText={setSearchQuery}
-          style={styles.input}
-        />
-        <TouchableOpacity style={styles.searchButton} onPress={handleSearch}>
-          <Text style={styles.searchButtonText}>Tìm</Text>
-        </TouchableOpacity>
-      </View>
+      <TouchableOpacity style={styles.backButton} onPress={router.back}>
+        <Ionicons name="arrow-back" size={24} color={Colors.light.whiteText} />
+      </TouchableOpacity>
 
       {searchLoading && (
         <View style={styles.loadingOverlay}>
@@ -240,43 +237,13 @@ const styles = StyleSheet.create({
   map: {
     flex: 1,
   },
-  searchBox: {
+  backButton: {
     position: 'absolute',
-    top: 50,
-    left: 15,
-    right: 15,
-    backgroundColor: Colors.light.background,
-    borderRadius: 12,
-    padding: 12,
-    elevation: 8,
-    shadowColor: Colors.light.blackText,
-    shadowOffset: { width: 0, height: 2 },
-    shadowOpacity: 0.2,
-    shadowRadius: 4,
-    flexDirection: 'row',
-    alignItems: 'center',
-  },
-  input: {
-    flex: 1,
-    paddingVertical: 10,
-    paddingHorizontal: 12,
-    borderRadius: 8,
-    backgroundColor: Colors.light.grayBackground,
-    color: Colors.light.text,
-    fontFamily: Fonts.Comfortaa.Regular,
-    fontSize: 16,
-  },
-  searchButton: {
-    backgroundColor: Colors.light.primaryText,
-    paddingVertical: 10,
-    paddingHorizontal: 16,
-    borderRadius: 8,
-    marginLeft: 10,
-  },
-  searchButtonText: {
-    color: Colors.light.whiteText,
-    fontFamily: Fonts.Comfortaa.Bold,
-    fontSize: 16,
+    top: 40,
+    left: 10,
+    backgroundColor: 'rgba(0, 0, 0, 0.26)',
+    borderRadius: 35,
+    padding: 8,
   },
   centered: {
     flex: 1,

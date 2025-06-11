@@ -80,7 +80,6 @@ const SnackPlaceDetail = () => {
     try {
       const data = await getAverageRate(id);
       console.log('Rating data:', data);
-      
       setRatingData(data.data);
     } catch (error) {
       setRatingData(null);
@@ -99,44 +98,39 @@ const SnackPlaceDetail = () => {
     }
   }, [snackPlaceId]);
 
- const formatTime = (time: string): string => {
-  // Validate input
-  if (!time || !/^\d{2}:\d{2}:\d{2}$/.test(time)) {
-    return 'Không xác định';
-  }
-
-  try {
-    // Extract hours and minutes
-    const [hourStr, minuteStr] = time.split(':');
-    const hour = parseInt(hourStr, 10);
-    const minute = parseInt(minuteStr, 10);
-
-    // Validate hour and minute ranges
-    if (hour < 0 || hour > 23 || minute < 0 || minute > 59) {
+  const formatTime = (time: string): string => {
+    if (!time || !/^\d{2}:\d{2}:\d{2}$/.test(time)) {
       return 'Không xác định';
     }
 
-    // Determine period and 12-hour format
-    let period: string;
-    let displayHour: number;
+    try {
+      const [hourStr, minuteStr] = time.split(':');
+      const hour = parseInt(hourStr, 10);
+      const minute = parseInt(minuteStr, 10);
 
-    if (hour >= 0 && hour < 12) {
-      period = 'sáng';
-      displayHour = hour === 0 ? 12 : hour;
-    } else if (hour >= 12 && hour < 18) {
-      period = 'chiều';
-      displayHour = hour === 12 ? 12 : hour - 12;
-    } else {
-      period = 'tối';
-      displayHour = hour - 12;
+      if (hour < 0 || hour > 23 || minute < 0 || minute > 59) {
+        return 'Không xác định';
+      }
+
+      let period: string;
+      let displayHour: number;
+
+      if (hour >= 0 && hour < 12) {
+        period = 'sáng';
+        displayHour = hour === 0 ? 12 : hour;
+      } else if (hour >= 12 && hour < 18) {
+        period = 'chiều';
+        displayHour = hour === 12 ? 12 : hour - 12;
+      } else {
+        period = 'tối';
+        displayHour = hour - 12;
+      }
+
+      return `${displayHour}:${minute.toString().padStart(2, '0')} ${period}`;
+    } catch (error) {
+      return 'Không xác định';
     }
-
-    // Format the time string
-    return `${displayHour}:${minute.toString().padStart(2, '0')} ${period}`;
-  } catch (error) {
-    return 'Không xác định';
-  }
-};
+  };
 
   const handleCopyAddress = async (address: string) => {
     await Clipboard.setStringAsync(address);
@@ -176,6 +170,13 @@ const SnackPlaceDetail = () => {
         params: { snackPlaceId },
       });
     }
+  };
+
+  const handleMapNavigation = (address: string) => {
+    router.push({
+      pathname: '/(snack-place)/map-location',
+      params: { address },
+    });
   };
 
   const renderDishItem = ({ item }: { item: Dish }) => (
@@ -258,14 +259,21 @@ const SnackPlaceDetail = () => {
               ) : (
                 <ThemedText style={styles.noRatingText}>Chưa có đánh giá</ThemedText>
               )}
-              <View style={styles.detailContainer}>
-                <View style={styles.detailRow}>
-                  <Ionicons name="location-outline" size={24} color={Colors.light.text} style={styles.icon} />
-                  <ThemedText style={styles.detail}>{snackPlace.address}</ThemedText>
+              <View style={styles.detailRow}>
+                <Ionicons name="location-outline" size={24} color={Colors.light.text} style={styles.icon} />
+                <View style={styles.addressContainer}>
+                  <View style={styles.addressWrapper}>
+                    <ThemedText style={styles.addressText} numberOfLines={2} ellipsizeMode="tail">
+                      {snackPlace.address}
+                    </ThemedText>
+                  </View>
+                  <TouchableOpacity
+                    style={styles.inlineCopyButton}
+                    onPress={() => handleCopyAddress(snackPlace.address)}
+                  >
+                    <Ionicons name="copy-outline" size={15} color={Colors.light.text} />
+                  </TouchableOpacity>
                 </View>
-                <TouchableOpacity style={styles.copyButton} onPress={() => handleCopyAddress(snackPlace.address)}>
-                  <Ionicons name="copy-outline" size={15} color={Colors.light.text} />
-                </TouchableOpacity>
               </View>
               <View style={styles.detailRow}>
                 <Ionicons name="time-outline" size={24} color={Colors.light.text} style={styles.icon} />
@@ -336,108 +344,33 @@ const styles = StyleSheet.create({
   container: { flex: 1 },
   imageContainer: { position: 'relative' },
   image: { width: '100%', height: 200 },
-  backButton: {
-    position: 'absolute',
-    top: 40,
-    left: 10,
-    flexDirection: 'row',
-    alignItems: 'center',
-    backgroundColor: 'rgba(0, 0, 0, 0.26)',
-    borderRadius: 35,
-    padding: 8,
-  },
+  backButton: { position: 'absolute', top: 40, left: 10, flexDirection: 'row', alignItems: 'center', backgroundColor: 'rgba(0, 0, 0, 0.26)', borderRadius: 35, padding: 8 },
   content: { flex: 1 },
   contentContainer: { paddingBottom: 20 },
   paddedContent: { padding: 20 },
-  title: {
-    fontFamily: Fonts.Baloo2.ExtraBold,
-    fontSize: 30,
-    color: Colors.light.text,
-    marginBottom: 10,
-    lineHeight: 32,
-    paddingVertical: 2,
-  },
-  ratingContainer: {
-    marginBottom: 20,
-  },
-  ratingRowContainer: {
-    flexDirection: 'row',
-    alignItems: 'center',
-    marginBottom: 5,
-    flexWrap: 'wrap',
-  },
-  ratingRow: {
-    flexDirection: 'row',
-    alignItems: 'center',
-  },
-  ratingIcon: {
-    marginRight: 5,
-  },
-  ratingText: {
-    fontFamily: Fonts.Comfortaa.Regular,
-    fontSize: 16,
-    color: Colors.light.text,
-  },
-  commaSeparator: {
-    fontFamily: Fonts.Comfortaa.Regular,
-    fontSize: 16,
-    color: Colors.light.text,
-    marginHorizontal: 5,
-  },
-  recommendText: {
-    fontFamily: Fonts.Comfortaa.Regular,
-    fontSize: 16,
-    color: Colors.light.icon,
-  },
-  commentsLink: {
-    fontFamily: Fonts.Comfortaa.Regular,
-    fontSize: 16,
-    color: Colors.light.primaryText,
-    textDecorationLine: 'underline',
-  },
-  distributionContainer: {
-    flexDirection: 'column',
-  },
-  distributionRow: {
-    flexDirection: 'row',
-    alignItems: 'center',
-    marginBottom: 5,
-  },
-  distributionLabel: {
-    fontFamily: Fonts.Comfortaa.Regular,
-    fontSize: 12,
-    color: Colors.light.text,
-    width: 50,
-  },
-  barContainer: {
-    flex: 1,
-    height: 8,
-    backgroundColor: Colors.light.background,
-    borderRadius: 4,
-    marginHorizontal: 10,
-  },
-  bar: {
-    height: '100%',
-    backgroundColor: Colors.light.primaryText,
-    borderRadius: 4,
-  },
-  detailContainer: { flexDirection: 'row', alignItems: 'center', marginBottom: 5 },
-  detailRow: { flexDirection: 'row', alignItems: 'center', marginBottom: 5, flex: 1 },
+  title: { fontFamily: Fonts.Baloo2.ExtraBold, fontSize: 30, color: Colors.light.text, marginBottom: 10, lineHeight: 32, paddingVertical: 2 },
+  ratingContainer: { marginBottom: 20 },
+  ratingRowContainer: { flexDirection: 'row', alignItems: 'center', marginBottom: 5, flexWrap: 'wrap' },
+  ratingRow: { flexDirection: 'row', alignItems: 'center' },
+  ratingIcon: { marginRight: 5 },
+  ratingText: { fontFamily: Fonts.Comfortaa.Regular, fontSize: 16, color: Colors.light.text },
+  commaSeparator: { fontFamily: Fonts.Comfortaa.Regular, fontSize: 16, color: Colors.light.text, marginHorizontal: 5 },
+  recommendText: { fontFamily: Fonts.Comfortaa.Regular, fontSize: 16, color: Colors.light.icon },
+  commentsLink: { fontFamily: Fonts.Comfortaa.Regular, fontSize: 16, color: Colors.light.primaryText, textDecorationLine: 'underline' },
+  distributionContainer: { flexDirection: 'column' },
+  distributionRow: { flexDirection: 'row', alignItems: 'center', marginBottom: 5 },
+  distributionLabel: { fontFamily: Fonts.Comfortaa.Regular, fontSize: 12, color: Colors.light.text, width: 50 },
+  barContainer: { flex: 1, height: 8, backgroundColor: Colors.light.background, borderRadius: 4, marginHorizontal: 10 },
+  bar: { height: '100%', backgroundColor: Colors.light.primaryText, borderRadius: 4 },
+  detailRow: { flexDirection: 'row', alignItems: 'flex-start', marginBottom: 5 },
+  addressContainer: { flex: 1, flexDirection: 'row', flexWrap: 'wrap' },
+  addressWrapper: { flexDirection: 'row', alignItems: 'center', flex: 1 },
+  addressText: { fontFamily: Fonts.Comfortaa.Bold, fontSize: 13, color: Colors.light.primaryText, flexShrink: 1, maxWidth: '90%' },
   detail: { fontFamily: Fonts.Comfortaa.Regular, fontSize: 13, color: Colors.light.icon },
   icon: { marginRight: 8 },
-  copyButton: { padding: 8 },
-  reviewButton: {
-    backgroundColor: Colors.light.primaryText,
-    padding: 8,
-    borderRadius: 4,
-    alignItems: 'center',
-    marginBottom: 10,
-  },
-  reviewButtonText: {
-    fontFamily: Fonts.Comfortaa.Bold,
-    fontSize: 12,
-    color: Colors.light.whiteText,
-  },
+  inlineCopyButton: { padding: 4, marginTop: -15, marginLeft: 8 },
+  reviewButton: { backgroundColor: Colors.light.primaryText, padding: 8, borderRadius: 4, alignItems: 'center', marginBottom: 10 },
+  reviewButtonText: { fontFamily: Fonts.Comfortaa.Bold, fontSize: 12, color: Colors.light.whiteText },
   loadingText: { fontFamily: Fonts.Comfortaa.Regular, fontSize: 16, textAlign: 'center', marginTop: 20 },
   errorText: { fontFamily: Fonts.Comfortaa.Regular, fontSize: 16, color: Colors.light.error, textAlign: 'center', marginTop: 20 },
   noRatingText: { fontFamily: Fonts.Comfortaa.Regular, fontSize: 16, color: Colors.light.icon, marginBottom: 20 },
@@ -456,7 +389,7 @@ const styles = StyleSheet.create({
   dishInfo: { flex: 1 },
   dishName: { fontFamily: Fonts.Comfortaa.Bold, fontSize: 16, color: Colors.light.text },
   dishPrice: { fontFamily: Fonts.Comfortaa.Regular, fontSize: 14, color: Colors.light.icon, marginTop: 5 },
-  dishDescription: { fontFamily: Fonts.Comfortaa.Regular, fontSize: 14, color: Colors.light.icon, marginTop: 5 },
+  dishDescription: { fontFamily: Fonts.Comfortaa.Regular, fontSize: 14, color: Colors.light.icon, marginTop: 5 }
 });
 
 export default SnackPlaceDetail;
