@@ -2,9 +2,10 @@ import { ThemedText } from '@/components/ThemedText';
 import { ThemedView } from '@/components/ThemedView';
 import { Colors } from '@/constants/Colors';
 import { Fonts } from '@/constants/Fonts';
-import { searchSnackPlaces } from '@/services/snackplace.services';
+import { recordSnackPlaceClick, searchSnackPlaces } from '@/services/snackplace.services';
+import AsyncStorage from '@react-native-async-storage/async-storage'; // Import AsyncStorage
 import { Image } from 'expo-image';
-import { router } from 'expo-router'; // Thêm import này
+import { router } from 'expo-router';
 import { useEffect, useState } from 'react';
 import { FlatList, StyleSheet, TouchableOpacity, View } from 'react-native';
 
@@ -43,7 +44,7 @@ const SnackPlace = () => {
         status: true,
       };
       const response = await searchSnackPlaces(params);
-      console.log('Search response:', response);
+     
       if (response.status === 200 && Array.isArray(response.data.pageData)) {
         const newData = response.data.pageData;
         setSnackPlaces((prev) => (reset ? newData : [...prev, ...newData]));
@@ -73,18 +74,58 @@ const SnackPlace = () => {
     fetchSnackPlaces(nextPage);
   };
 
-  const formatTime = (time: string) => {
-    const [hourStr, minute] = time.split(':');
-    const hour = parseInt(hourStr, 10);
-    const period = hour >= 12 ? 'tối' : 'sáng';
-    const displayHour = hour === 0 ? 12 : hour > 12 ? hour - 12 : hour;
-    return `${displayHour}h${minute} ${period}`;
+  const formatTime = (time: string): string => {
+    if (!time || !/^\d{2}:\d{2}:\d{2}$/.test(time)) {
+      return 'Không xác định';
+    }
+
+    try {
+      const [hourStr, minuteStr] = time.split(':');
+      const hour = parseInt(hourStr, 10);
+      const minute = parseInt(minuteStr, 10);
+
+      if (hour < 0 || hour > 23 || minute < 0 || minute > 59) {
+        return 'Không xác định';
+      }
+
+      let period: string;
+      let displayHour: number;
+
+      if (hour >= 0 && hour < 12) {
+        period = 'sáng';
+        displayHour = hour === 0 ? 12 : hour;
+      } else if (hour >= 12 && hour < 18) {
+        period = 'chiều';
+        displayHour = hour === 12 ? 12 : hour - 12;
+      } else {
+        period = 'tối';
+        displayHour = hour - 12;
+      }
+
+      return `${displayHour}:${minute.toString().padStart(2, '0')} ${period}`;
+    } catch (error) {
+      return 'Không xác định';
+    }
+  };
+
+  const handleCardPress = async (snackPlaceId: string) => {
+    try {
+      const userId = await AsyncStorage.getItem('user_id');
+      console.log(`User ID: ${userId}, Snack Place ID: ${snackPlaceId}`);
+      if (userId) {
+        await recordSnackPlaceClick(userId, snackPlaceId);
+        console.log(`Click recorded for snackPlaceId: ${snackPlaceId}`);
+      } else {
+        console.log('No userId found, skipping click record');
+      }
+    } catch (error) {
+      console.error('Error recording click:', error);
+    }
+    router.push({ pathname: '/(snack-place)/snack-place-detail', params: { snackPlaceId } });
   };
 
   const renderItem = ({ item }: { item: SnackPlaceData }) => (
-    <TouchableOpacity
-      onPress={() => router.push({ pathname: '/(snack-place)/snack-place-detail', params: { snackPlaceId: item.snackPlaceId } })} // Sử dụng router.push
-    >
+    <TouchableOpacity onPress={() => handleCardPress(item.snackPlaceId)}>
       <ThemedView style={styles.card}>
         <Image
           source={{ uri: item.image }}

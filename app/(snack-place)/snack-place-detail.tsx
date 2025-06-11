@@ -1,3 +1,4 @@
+import AlertModal from '@/components/AlertModal';
 import { ThemedText } from '@/components/ThemedText';
 import { ThemedView } from '@/components/ThemedView';
 import { Colors } from '@/constants/Colors';
@@ -6,11 +7,12 @@ import { getNoNotiDishesBySnackPlace } from '@/services/dish.services';
 import { getAverageRate } from '@/services/review.services';
 import { getSnackPlaceByIdSkipAll } from '@/services/snackplace.services';
 import { Ionicons } from '@expo/vector-icons';
+import AsyncStorage from '@react-native-async-storage/async-storage';
 import * as Clipboard from 'expo-clipboard';
 import { Image } from 'expo-image';
 import { router, useLocalSearchParams } from 'expo-router';
 import { useEffect, useState } from 'react';
-import { Alert, FlatList, ScrollView, StyleSheet, TouchableOpacity, View } from 'react-native';
+import { FlatList, ScrollView, StyleSheet, TouchableOpacity, View } from 'react-native';
 
 interface SnackPlaceDetailData {
   snackPlaceId: string;
@@ -45,6 +47,18 @@ const SnackPlaceDetail = () => {
   const [loadingDishes, setLoadingDishes] = useState(false);
   const [loadingRatings, setLoadingRatings] = useState(false);
   const [activeTab, setActiveTab] = useState<'overview' | 'dishes'>('overview');
+  const [modalVisible, setModalVisible] = useState(false);
+  const [modalConfig, setModalConfig] = useState<{
+    title: string;
+    message: string;
+    isSuccess: boolean;
+    onConfirm: () => void;
+  }>({
+    title: '',
+    message: '',
+    isSuccess: false,
+    onConfirm: () => setModalVisible(false),
+  });
 
   const fetchSnackPlaceDetail = async (id: string) => {
     setLoading(true);
@@ -56,6 +70,7 @@ const SnackPlaceDetail = () => {
   const fetchDishes = async (id: string) => {
     setLoadingDishes(true);
     const { status, data } = await getNoNotiDishesBySnackPlace(id);
+    console.log('Dishes data:', status, data);
     setDishes(status === 200 && data ? data : []);
     setLoadingDishes(false);
   };
@@ -64,6 +79,8 @@ const SnackPlaceDetail = () => {
     setLoadingRatings(true);
     try {
       const data = await getAverageRate(id);
+      console.log('Rating data:', data);
+      
       setRatingData(data.data);
     } catch (error) {
       setRatingData(null);
@@ -82,19 +99,68 @@ const SnackPlaceDetail = () => {
     }
   }, [snackPlaceId]);
 
-  const formatTime = (time: string) => {
-    const [hour, minute] = time.split(':').map(Number);
-    const period = hour >= 12 ? 'tối' : 'sáng';
-    const displayHour = hour % 12 || 12;
-    return `${displayHour}h${minute.toString().padStart(2, '0')} ${period}`;
-  };
+ const formatTime = (time: string): string => {
+  // Validate input
+  if (!time || !/^\d{2}:\d{2}:\d{2}$/.test(time)) {
+    return 'Không xác định';
+  }
+
+  try {
+    // Extract hours and minutes
+    const [hourStr, minuteStr] = time.split(':');
+    const hour = parseInt(hourStr, 10);
+    const minute = parseInt(minuteStr, 10);
+
+    // Validate hour and minute ranges
+    if (hour < 0 || hour > 23 || minute < 0 || minute > 59) {
+      return 'Không xác định';
+    }
+
+    // Determine period and 12-hour format
+    let period: string;
+    let displayHour: number;
+
+    if (hour >= 0 && hour < 12) {
+      period = 'sáng';
+      displayHour = hour === 0 ? 12 : hour;
+    } else if (hour >= 12 && hour < 18) {
+      period = 'chiều';
+      displayHour = hour === 12 ? 12 : hour - 12;
+    } else {
+      period = 'tối';
+      displayHour = hour - 12;
+    }
+
+    // Format the time string
+    return `${displayHour}:${minute.toString().padStart(2, '0')} ${period}`;
+  } catch (error) {
+    return 'Không xác định';
+  }
+};
 
   const handleCopyAddress = async (address: string) => {
     await Clipboard.setStringAsync(address);
-    Alert.alert('Thành công', 'Địa chỉ đã được sao chép!');
+    setModalConfig({
+      title: 'Thành công',
+      message: 'Địa chỉ đã được sao chép!',
+      isSuccess: true,
+      onConfirm: () => setModalVisible(false),
+    });
+    setModalVisible(true);
   };
 
-  const handleReviewNavigation = () => {
+  const handleReviewNavigation = async () => {
+    const accessToken = await AsyncStorage.getItem('accessToken');
+    if (!accessToken) {
+      setModalConfig({
+        title: 'Thông báo',
+        message: 'Bạn cần đăng nhập để thực hiện đánh giá.',
+        isSuccess: false,
+        onConfirm: () => setModalVisible(false),
+      });
+      setModalVisible(true);
+      return;
+    }
     if (typeof snackPlaceId === 'string') {
       router.push({
         pathname: '/review',
@@ -167,7 +233,6 @@ const SnackPlaceDetail = () => {
                     <ThemedText style={styles.recommendText}>
                       {ratingData.recommendPercent.toFixed(2)}% khuyên dùng
                     </ThemedText>
-                  
                     <TouchableOpacity onPress={handleCommentsNavigation}>
                       <ThemedText style={styles.commentsLink}>(xem bình luận)</ThemedText>
                     </TouchableOpacity>
@@ -250,6 +315,15 @@ const SnackPlaceDetail = () => {
               )}
             </View>
           </ScrollView>
+          <AlertModal
+            visible={modalVisible}
+            title={modalConfig.title}
+            message={modalConfig.message}
+            isSuccess={modalConfig.isSuccess}
+            showCancel={false}
+            confirmText="OK"
+            onConfirm={modalConfig.onConfirm}
+          />
         </>
       )}
     </ThemedView>
@@ -272,7 +346,6 @@ const styles = StyleSheet.create({
     borderRadius: 35,
     padding: 8,
   },
-  backButtonText: { fontFamily: Fonts.Comfortaa.Regular, fontSize: 16, color: Colors.light.text, marginLeft: 8 },
   content: { flex: 1 },
   contentContainer: { paddingBottom: 20 },
   paddedContent: { padding: 20 },

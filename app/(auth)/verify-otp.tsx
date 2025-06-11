@@ -150,48 +150,46 @@ const VerifyOTP = () => {
     setIsOtpVerified(true);
   };
 
-  const handleResetPassword = async () => {
-    if (!newPassword || !confirmPassword) {
-      setError('Vui lòng nhập đầy đủ mật khẩu.');
-      return;
-    }
+const handleResetPassword = async () => {
+  // Validate input fields
+  if (!newPassword || !confirmPassword) {
+    setError('Vui lòng nhập đầy đủ mật khẩu.');
+    return;
+  }
 
-    if (newPassword !== confirmPassword) {
-      setError('Mật khẩu xác nhận không khớp.');
-      return;
-    }
+  // Check if passwords match
+  if (newPassword !== confirmPassword) {
+    setError('Mật khẩu xác nhận không khớp.');
+    return;
+  }
 
-    if (newPassword.length < 6) {
-      setError('Mật khẩu phải có ít nhất 6 ký tự.');
-      return;
-    }
+  // Check password length
+  if (newPassword.length < 6) {
+    setError('Mật khẩu phải có ít nhất 6 ký tự.');
+    return;
+  }
 
-    if (!email) {
-      setError('Không tìm thấy email. Vui lòng thử lại.');
-      return;
-    }
+  // Check if email exists
+  if (!email) {
+    setError('Không tìm thấy email. Vui lòng thử lại.');
+    return;
+  }
 
-    setIsLoading(true);
-    setError('');
+  setIsLoading(true);
+  setError('');
 
-    try {
-      const otpCode = otp.join('');
-      await ResetPasswordApi({
-        email,
-        otp: otpCode,
-        newPassword,
-      });
-      router.replace('/(auth)/signin');
-    } catch (error) {
-      console.error('Error resetting password:', error);
-      setError('Mã OTP không hợp lệ. Vui lòng nhập lại.');
-      setIsOtpVerified(false);
-      setNewPassword('');
-      setConfirmPassword('');
-    } finally {
-      setIsLoading(false);
-    }
-  };
+  // No try-catch to avoid handling API errors
+  const otpCode = otp.join('');
+  await ResetPasswordApi({
+    email,
+    otp: otpCode,
+    newPassword,
+  });
+
+  // Navigate to signin-merchant
+  router.replace('/(auth)/signin');
+  setIsLoading(false);
+};
 
   const styles = StyleSheet.create({
     container: {

@@ -23,6 +23,6 @@ export default function HomeScreen() {
 const styles = StyleSheet.create({
   container: {
     flex: 1,
-    paddingTop: Platform.select({ ios: 50, android: 60, web: 30 }),
+    paddingTop: Platform.select({ ios: 50, android: 50, web: 30 }),
   },
 });

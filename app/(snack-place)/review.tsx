@@ -38,47 +38,53 @@ const Review = () => {
   };
 
   const handleSubmit = async () => {
-  if (
-    !tasteRating ||
-    !priceRating ||
-    !sanitaryRating ||
-    !textureRating ||
-    !convenienceRating ||
-    !comment.trim()
-  ) {
-    Alert.alert('Lỗi', 'Vui lòng chọn số sao cho tất cả hạng mục và nhập nhận xét.');
-    return;
-  }
-
-  try {
-    const userId = await AsyncStorage.getItem('user_id');
-    if (!userId) {
-      Alert.alert('Lỗi', 'Không tìm thấy thông tin người dùng. Vui lòng đăng nhập lại.');
+    // Prevent submission if image is uploading
+    if (isUploading) {
       return;
     }
 
-    const reviewData = {
-      snackPlaceId: typeof snackPlaceId === 'string' ? snackPlaceId : '',
-      userId,
-      tasteRating,
-      priceRating,
-      sanitaryRating,
-      textureRating,
-      convenienceRating,
-      image: image.trim() || '',
-      comment,
-    };
-    await createReview(reviewData);
-    
-    
-    router.replace({
-      pathname: '/snack-place-detail',
-      params: { snackPlaceId },
-    });
-  } catch (error: any) {
-    Alert.alert('Lỗi', error.message || 'Không thể gửi đánh giá. Vui lòng thử lại.');
-  }
-};
+    // Validate ratings and comment
+    if (
+      !tasteRating ||
+      !priceRating ||
+      !sanitaryRating ||
+      !textureRating ||
+      !convenienceRating ||
+      !comment.trim()
+    ) {
+      Alert.alert('Lỗi', 'Vui lòng chọn số sao cho tất cả hạng mục và nhập nhận xét.');
+      return;
+    }
+
+    try {
+      const userId = await AsyncStorage.getItem('user_id');
+      if (!userId) {
+        Alert.alert('Lỗi', 'Không tìm thấy thông tin người dùng. Vui lòng đăng nhập lại.');
+        return;
+      }
+
+      const reviewData = {
+        snackPlaceId: typeof snackPlaceId === 'string' ? snackPlaceId : '',
+        userId,
+        tasteRating,
+        priceRating,
+        sanitaryRating,
+        textureRating,
+        convenienceRating,
+        image: image.trim() || '',
+        comment,
+      };
+      console.log('Review data:', reviewData);
+      await createReview(reviewData);
+
+      router.push({
+        pathname: '/snack-place-detail',
+        params: { snackPlaceId },
+      });
+    } catch (error: any) {
+      Alert.alert('Lỗi', error.message || 'Không thể gửi đánh giá. Vui lòng thử lại.');
+    }
+  };
 
   const handleRefresh = () => {
     setRefreshing(true);
@@ -123,9 +129,9 @@ const Review = () => {
     <GestureHandlerRootView style={{ flex: 1 }}>
       <ThemedView style={styles.container}>
         <View style={styles.header}>
-          <TouchableOpacity style={styles.backButton} onPress={router.back}>
+            <TouchableOpacity style={styles.backButton} onPress={() => router.push('/(tabs)')}>
             <Ionicons name="arrow-back" size={24} color={Colors.light.whiteText} />
-          </TouchableOpacity>
+            </TouchableOpacity>
           <ThemedText style={styles.title}>Đánh giá quán</ThemedText>
         </View>
         <ScrollView
@@ -171,7 +177,11 @@ const Review = () => {
               </View>
             )}
           </TouchableOpacity>
-          <TouchableOpacity style={styles.submitButton} onPress={handleSubmit}>
+          <TouchableOpacity
+            style={[styles.submitButton, isUploading && styles.disabledContainer]}
+            onPress={handleSubmit}
+            disabled={isUploading}
+          >
             <ThemedText style={styles.submitButtonText}>Gửi đánh giá</ThemedText>
           </TouchableOpacity>
         </ScrollView>

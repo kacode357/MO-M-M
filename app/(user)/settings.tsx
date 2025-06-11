@@ -5,7 +5,7 @@ import { Ionicons } from '@expo/vector-icons';
 import AsyncStorage from '@react-native-async-storage/async-storage';
 import { useRouter } from 'expo-router';
 import React from 'react';
-import { ScrollView, StyleSheet, Text, TouchableOpacity, View } from 'react-native';
+import { ScrollView, StyleSheet, Text, TouchableOpacity } from 'react-native';
 
 const Settings = () => {
   const colorScheme = useColorScheme() ?? 'light';
@@ -101,13 +101,10 @@ const Settings = () => {
         <Ionicons name="chevron-forward" size={20} color={Colors[colorScheme].text} />
       </TouchableOpacity>
       <TouchableOpacity style={styles.row}>
-        <Text style={styles.rowText}>Nguồn ngữ / Language</Text>
+        <Text style={styles.rowText}>Ngôn ngữ</Text>
         <Ionicons name="chevron-forward" size={20} color={Colors[colorScheme].text} />
       </TouchableOpacity>
-      <View style={styles.row}>
-        <Text style={styles.rowText}>Tiếng Việt</Text>
-        <Ionicons name="chevron-forward" size={20} color={Colors[colorScheme].text} />
-      </View>
+      
 
       <TouchableOpacity onPress={handleLogout}>
         <Text style={styles.logoutText}>Đăng xuất</Text>

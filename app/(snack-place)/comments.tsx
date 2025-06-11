@@ -39,16 +39,19 @@ const Comments = () => {
     try {
       const userId = await AsyncStorage.getItem('user_id');
       setCurrentUserId(userId);
+      return userId;
     } catch (err) {
       setError('Không thể lấy thông tin người dùng.');
+      return null;
     }
   };
 
-  const fetchReviews = async (id: string) => {
+  const fetchReviews = async (id: string, userId: string | null) => {
     setLoading(true);
     setError(null);
     try {
-      const response = await getReviewsBySnackPlaceId(id);
+      const response = await getReviewsBySnackPlaceId(id, userId || '');
+      console.log('Fetch reviews response:', response);
       if (response.status === 200 && response.data) {
         setReviews(response.data);
       } else {
@@ -96,13 +99,22 @@ const Comments = () => {
   };
 
   useEffect(() => {
-    fetchUserId();
-    if (typeof snackPlaceId === 'string') {
-      fetchReviews(snackPlaceId);
-    } else {
+    if (typeof snackPlaceId !== 'string') {
       setError('ID quán không hợp lệ.');
       setLoading(false);
+      return;
     }
+
+    const initialize = async () => {
+      const userId = await fetchUserId();
+      if (userId !== null || !error) {
+        await fetchReviews(snackPlaceId, userId);
+      } else {
+        setLoading(false);
+      }
+    };
+
+    initialize();
   }, [snackPlaceId]);
 
   const formatDate = (dateString: string) => {
@@ -247,6 +259,7 @@ const Comments = () => {
 
 Comments.displayName = 'Comments';
 
+// Styles remain unchanged
 const styles = StyleSheet.create({
   container: { flex: 1 },
   header: {

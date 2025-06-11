@@ -46,5 +46,12 @@ const getSnackPlaceByIdSkipAll = async (id: string) => {
   });
   return response.data;
 };
-export { createSnackPlace, getSnackPlaceById, getSnackPlaceByIdSkipAll, searchSnackPlaces };
+const recordSnackPlaceClick = async (userId: string, snackPlaceId: string) => {
+  const response = await skipNotiAxiosInstance.post('/api/SnackPlaces/click', {
+    userId,
+    snackPlaceId,
+  });
+  return response.data;
+};
+export { createSnackPlace, getSnackPlaceById, getSnackPlaceByIdSkipAll, recordSnackPlaceClick, searchSnackPlaces };
 

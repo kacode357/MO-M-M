@@ -1,4 +1,5 @@
 import DEFAULT_AVATAR from '@/assets/images/logo-app.png';
+import AlertModal from '@/components/AlertModal';
 import { Colors } from '@/constants/Colors';
 import { useColorScheme } from '@/hooks/useColorScheme';
 import { GetUserByIdApi, UpdateUserApi } from '@/services/user.services';
@@ -8,6 +9,7 @@ import DateTimePicker from '@react-native-community/datetimepicker';
 import { format, parseISO } from 'date-fns';
 import React, { useEffect, useRef, useState } from 'react';
 import {
+  ActivityIndicator,
   Image,
   Keyboard,
   KeyboardAvoidingView,
@@ -32,13 +34,25 @@ const PersonalInfo = () => {
   const colorScheme = useColorScheme() ?? 'light';
   const [userData, setUserData] = useState<UserData | null>(null);
   const [isEditing, setIsEditing] = useState(false);
-  const [status, setStatus] = useState<'loading' | 'error' | 'success'>('loading');
   const [showDatePicker, setShowDatePicker] = useState(false);
   const [isUploading, setIsUploading] = useState(false);
   const [isUpdating, setIsUpdating] = useState(false);
+  const [modalVisible, setModalVisible] = useState(false);
+  const [modalConfig, setModalConfig] = useState<{
+    title: string;
+    message: string;
+    isSuccess: boolean;
+    onConfirm: () => void;
+  }>({
+    title: '',
+    message: '',
+    isSuccess: false,
+    onConfirm: () => setModalVisible(false),
+  });
   const scrollViewRef = useRef<ScrollView>(null);
   const [keyboardHeight, setKeyboardHeight] = useState(0);
 
+  // Fetch user data on mount
   useEffect(() => {
     const fetchUserData = async () => {
       try {
@@ -46,10 +60,15 @@ const PersonalInfo = () => {
         if (!userId) throw new Error('User ID not found');
         const response = await GetUserByIdApi(userId);
         setUserData(response.data);
-        setStatus('success');
       } catch (error) {
         console.error('Fetch user error:', error);
-        setStatus('error');
+        setModalConfig({
+          title: 'Lỗi',
+          message: 'Không thể tải thông tin người dùng. Vui lòng thử lại.',
+          isSuccess: false,
+          onConfirm: () => setModalVisible(false),
+        });
+        setModalVisible(true);
       }
     };
 
@@ -69,72 +88,117 @@ const PersonalInfo = () => {
     };
   }, []);
 
+  // Update input fields
   const handleInputChange = (field: keyof UserData, value: string) => {
     if (userData) {
       setUserData({ ...userData, [field]: value });
     }
   };
 
+  // Handle date selection
   const handleDateChange = (event: any, selectedDate?: Date) => {
-    if (Platform.OS === 'android') setShowDatePicker(false);
+    setShowDatePicker(Platform.OS === 'ios' && event.type !== 'dismiss');
     if (selectedDate && userData) {
       setUserData({ ...userData, dateOfBirth: format(selectedDate, 'yyyy-MM-dd') });
     }
   };
 
+  // Validate and update user data
   const handleUpdate = async () => {
-    if (!userData) return;
+    if (!userData || isUploading) return;
+
+    // Validate phone number (exactly 10 digits)
+    if (!/^\d{10}$/.test(userData.phoneNumber)) {
+      setModalConfig({
+        title: 'Lỗi',
+        message: 'Số điện thoại phải chứa đúng 10 chữ số.',
+        isSuccess: false,
+        onConfirm: () => setModalVisible(false),
+      });
+      setModalVisible(true);
+      return;
+    }
+
     try {
       setIsUpdating(true);
       await UpdateUserApi(userData);
       await AsyncStorage.setItem('user_fullname', userData.fullname);
       setIsEditing(false);
-      setStatus('success');
+    
+     
     } catch (error) {
       console.error('Update user error:', error);
-      setStatus('error');
+      
+    
     } finally {
       setIsUpdating(false);
     }
   };
 
+  // Handle profile image upload
   const handleImageUpload = async () => {
     if (!userData) return;
     try {
       const result = await uploadImage(
         () => {}, // No-op for setImageUri
         (url) => url && setUserData({ ...userData, image: url }),
-        setIsUploading
+        setIsUploading,
       );
-      // Only set error status if there's an actual upload error, not on cancel
-      if (!result.imageUrl && !result.imageUri) {
-        // If both are null, it was canceled, so do nothing
-        return;
-      }
       if (!result.imageUrl && result.imageUri) {
-        // If imageUri exists but imageUrl doesn't, there was an upload error
-        setStatus('error');
+        // Upload failed
+        setModalConfig({
+          title: 'Lỗi',
+          message: 'Tải ảnh lên thất bại. Vui lòng thử lại.',
+          isSuccess: false,
+          onConfirm: () => setModalVisible(false),
+        });
+        setModalVisible(true);
       }
     } catch (error) {
       console.error('Image upload error:', error);
-      setStatus('error');
+      setModalConfig({
+        title: 'Lỗi',
+        message: 'Tải ảnh lên thất bại. Vui lòng thử lại.',
+        isSuccess: false,
+        onConfirm: () => setModalVisible(false),
+      });
+      setModalVisible(true);
     }
   };
 
+  // Format date for display
   const formatDisplayDate = (dateString: string): string => {
     try {
       return format(parseISO(dateString), 'dd/MM/yyyy');
     } catch {
-      return dateString || 'DD/MM/YYYY';
+      return 'DD/MM/YYYY';
     }
   };
 
   const styles = StyleSheet.create({
     container: { flex: 1, backgroundColor: Colors[colorScheme].background },
     scrollContainer: { padding: 20, paddingBottom: 40 },
-    profileContainer: { alignItems: 'center', marginBottom: 20 },
-    profileImage: { width: 100, height: 100, borderRadius: 50 },
-    inputLabel: { fontSize: 16, fontWeight: '600', color: Colors[colorScheme].blackText, marginBottom: 8 },
+    imagePickerContainer: {
+      width: 100,
+      height: 100,
+      borderWidth: 2,
+      borderStyle: 'dashed',
+      borderColor: Colors[colorScheme].primaryText,
+      borderRadius: 8,
+      justifyContent: 'center',
+      alignItems: 'center',
+      marginBottom: 16,
+      overflow: 'hidden',
+      alignSelf: 'center',
+    },
+    disabledContainer: { opacity: 0.6 },
+    profileImage: { width: 100, height: 100, borderRadius: 8 },
+    inputLabel: {
+      fontSize: 16,
+      fontWeight: '600',
+      color: Colors[colorScheme].blackText,
+      marginBottom: 8,
+    },
     input: {
       borderWidth: 1,
       borderColor: Colors[colorScheme].grayBackground,
@@ -158,19 +222,11 @@ const PersonalInfo = () => {
       fontSize: 16,
       color: userData?.dateOfBirth ? Colors[colorScheme].text : Colors[colorScheme].icon,
     },
-    uploadButton: {
-      backgroundColor: Colors[colorScheme].primaryText,
-      padding: 12,
-      borderRadius: 8,
-      alignItems: 'center',
-      marginBottom: 16,
+    buttonContainer: {
+      flexDirection: 'row',
+      justifyContent: 'space-between',
+      marginTop: 20,
     },
-    uploadButtonText: {
-      color: Colors[colorScheme].whiteText,
-      fontSize: 16,
-      fontWeight: '600',
-    },
-    buttonContainer: { flexDirection: 'row', justifyContent: 'space-between', marginTop: 20 },
     button: {
       flex: 1,
       backgroundColor: isEditing ? Colors[colorScheme].primaryText : Colors[colorScheme].grayBackground,
@@ -183,26 +239,21 @@ const PersonalInfo = () => {
       color: isEditing ? Colors[colorScheme].whiteText : Colors[colorScheme].blackText,
       fontSize: 16,
       fontWeight: '600',
- 
     },
     disabledButton: { opacity: 0.5 },
-    statusContainer: { flex: 1, justifyContent: 'center', alignItems: 'center' },
-    statusText: { fontSize: 18, color: Colors[colorScheme].error },
   });
 
-  if (status === 'loading') {
+  if (!userData) {
     return (
-      <View style={styles.statusContainer}>
-        <Text style={styles.statusText}>Loading...</Text>
-      </View>
-    );
-  }
-
-  if (status === 'error' || !userData) {
-    return (
-      <View style={styles.statusContainer}>
-        <Text style={styles.statusText}>Failed to load user data</Text>
-      </View>
+      <AlertModal
+        visible={modalVisible}
+        title={modalConfig.title}
+        message={modalConfig.message}
+        isSuccess={modalConfig.isSuccess}
+        showCancel={false}
+        confirmText="OK"
+        onConfirm={modalConfig.onConfirm}
+      />
     );
   }
 
@@ -218,25 +269,20 @@ const PersonalInfo = () => {
         keyboardShouldPersistTaps="handled"
         showsVerticalScrollIndicator={false}
       >
-        <View style={styles.profileContainer}>
-          <Image
-            source={userData.image?.trim() ? { uri: userData.image } : DEFAULT_AVATAR}
-            style={styles.profileImage}
-            defaultSource={DEFAULT_AVATAR}
-          />
-        </View>
-
-        {isEditing && (
-          <TouchableOpacity
-            style={[styles.uploadButton, isUploading && styles.disabledButton]}
-            onPress={handleImageUpload}
-            disabled={isUploading}
-          >
-            <Text style={styles.uploadButtonText}>
-              {isUploading ? 'Đang tải lên...' : 'Chọn ảnh hồ sơ'}
-            </Text>
-          </TouchableOpacity>
-        )}
+        <TouchableOpacity
+          style={[styles.imagePickerContainer, (!isEditing || isUploading) && styles.disabledContainer]}
+          onPress={isEditing ? handleImageUpload : undefined}
+          disabled={!isEditing || isUploading}
+        >
+          {isUploading ? (
+            <ActivityIndicator size="large" color={Colors[colorScheme].primaryText} />
+          ) : (
+            <Image
+              source={userData.image?.trim() ? { uri: userData.image } : DEFAULT_AVATAR}
+              style={styles.profileImage}
+            />
+          )}
+        </TouchableOpacity>
 
         <Text style={styles.inputLabel}>Họ và Tên</Text>
         <TextInput
@@ -244,7 +290,7 @@ const PersonalInfo = () => {
           value={userData.fullname}
           onChangeText={(text) => handleInputChange('fullname', text)}
           editable={isEditing}
-          placeholder="Nguyễn Văn A"
+          placeholder="Nhập họ và tên"
           placeholderTextColor={Colors[colorScheme].icon}
         />
 
@@ -252,11 +298,12 @@ const PersonalInfo = () => {
         <TextInput
           style={styles.input}
           value={userData.phoneNumber}
-          onChangeText={(text) => handleInputChange('phoneNumber', text)}
+          onChangeText={(text) => handleInputChange('phoneNumber', text.replace(/[^0-9]/g, ''))}
           editable={isEditing}
           placeholder="0123456789"
           placeholderTextColor={Colors[colorScheme].icon}
           keyboardType="phone-pad"
+          maxLength={10}
         />
 
         <Text style={styles.inputLabel}>Ngày Sinh</Text>
@@ -289,9 +336,9 @@ const PersonalInfo = () => {
           {isEditing ? (
             <>
               <TouchableOpacity
-                style={[styles.button, isUpdating && styles.disabledButton]}
+                style={[styles.button, (isUploading || isUpdating) && styles.disabledButton]}
                 onPress={handleUpdate}
-                disabled={isUpdating}
+                disabled={isUploading || isUpdating}
               >
                 <Text style={styles.buttonText}>{isUpdating ? 'Đang lưu...' : 'Lưu'}</Text>
               </TouchableOpacity>
@@ -315,6 +362,15 @@ const PersonalInfo = () => {
           )}
         </View>
       </ScrollView>
+      <AlertModal
+        visible={modalVisible}
+        title={modalConfig.title}
+        message={modalConfig.message}
+        isSuccess={modalConfig.isSuccess}
+        showCancel={false}
+        confirmText="OK"
+        onConfirm={modalConfig.onConfirm}
+      />
     </KeyboardAvoidingView>
   );
 };

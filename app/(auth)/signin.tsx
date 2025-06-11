@@ -40,63 +40,56 @@ const Signin = () => {
     Keyboard.dismiss();
   };
 
-  const handleSignin = async () => {
-    if (!userName || !password) {
-      setModalConfig({
-        title: 'Lỗi',
-        message: 'Vui lòng điền đầy đủ tên đăng nhập và mật khẩu',
-      });
-      setModalVisible(true);
-      return;
-    }
+ const handleSignin = async () => {
+  // Validate input fields
+  if (!userName || !password) {
+    setModalConfig({
+      title: 'Lỗi',
+      message: 'Vui lòng điền đầy đủ tên đăng nhập và mật khẩu',
+    });
+    setModalVisible(true);
+    return;
+  }
 
-    if (!/^[a-z0-9_-]+$/.test(userName)) {
-      setModalConfig({
-        title: 'Lỗi',
-        message: 'Tên đăng nhập chỉ được chứa chữ thường, số, dấu gạch dưới hoặc gạch ngang, không chứa khoảng trắng hoặc chữ hoa',
-      });
-      setModalVisible(true);
-      return;
-    }
+  // Validate username format
+  if (!/^[a-z0-9_-]+$/.test(userName)) {
+    setModalConfig({
+      title: 'Lỗi',
+      message: 'Tên đăng nhập chỉ được chứa chữ thường, số, dấu gạch dưới hoặc gạch ngang, không chứa khoảng trắng hoặc chữ hoa',
+    });
+    setModalVisible(true);
+    return;
+  }
 
-    setIsLoading(true);
-    try {
-      const loginResponse = await LoginUserApi({ userName, password });
-      const { accessToken, refreshToken } = loginResponse.data;
-      await AsyncStorage.setItem('accessToken', accessToken);
-      await AsyncStorage.setItem('refreshToken', refreshToken);
-      const userResponse = await GetCurrentUserApi();
-      
-      // Check first role in roles array
-      console.log('User roles:', userResponse.data.roles[0]);
-      if (userResponse.data.roles[0] !== 'User') {
-        setModalConfig({
-          title: 'Lỗi Quyền Truy Cập',
-          message: 'Chỉ người dùng mới có thể sử dụng tính năng này.',
-        });
-        setModalVisible(true);
-        return;
-      }
+  setIsLoading(true);
+  // No try-catch to avoid handling API errors
+  const loginResponse = await LoginUserApi({ userName, password });
+  const { accessToken, refreshToken } = loginResponse.data;
+  await AsyncStorage.setItem('accessToken', accessToken);
+  await AsyncStorage.setItem('refreshToken', refreshToken);
 
-      const { premium, id, userName: userNameResponse, email, fullname } = userResponse.data;
-      await AsyncStorage.setItem('user_premium', JSON.stringify(premium));
-      await AsyncStorage.setItem('user_id', id);
-      await AsyncStorage.setItem('user_name', userNameResponse);
-      await AsyncStorage.setItem('user_email', email);
-      await AsyncStorage.setItem('user_fullname', fullname);
-      router.push('/(tabs)');
-    } catch (error) {
-      console.error('Signin error:', error);
-      setModalConfig({
-        title: 'Lỗi',
-        message: 'Đăng nhập thất bại. Vui lòng kiểm tra lại thông tin.',
-      });
-      setModalVisible(true);
-    } finally {
-      setIsLoading(false);
-    }
-  };
+  const userResponse = await GetCurrentUserApi();
+  const { premium, id, userName: userNameResponse, email, fullname, roles } = userResponse.data;
+  console.log('User roles:', roles[0]);
 
+  // Check if the user has the User role
+  if (roles[0] !== 'User') {
+    console.log('Access denied: User does not have User role');
+    setIsLoading(false);
+    return;
+  }
+
+  // Store user data in AsyncStorage
+  await AsyncStorage.setItem('user_premium', JSON.stringify(premium));
+  await AsyncStorage.setItem('user_id', id);
+  await AsyncStorage.setItem('user_name', userNameResponse);
+  await AsyncStorage.setItem('user_email', email);
+  await AsyncStorage.setItem('user_fullname', fullname);
+
+  // Navigate to tabs
+  router.push('/(tabs)');
+  setIsLoading(false);
+};
   const styles = signinStyles(colorScheme, isLoading);
 
   return (
