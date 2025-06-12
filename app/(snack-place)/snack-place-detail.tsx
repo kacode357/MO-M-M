@@ -262,18 +262,21 @@ const SnackPlaceDetail = () => {
               <View style={styles.detailRow}>
                 <Ionicons name="location-outline" size={24} color={Colors.light.text} style={styles.icon} />
                 <View style={styles.addressContainer}>
-                  <View style={styles.addressWrapper}>
-                    <ThemedText style={styles.addressText} numberOfLines={2} ellipsizeMode="tail">
-                      {snackPlace.address}
-                    </ThemedText>
-                  </View>
-                  <TouchableOpacity
-                    style={styles.inlineCopyButton}
-                    onPress={() => handleCopyAddress(snackPlace.address)}
-                  >
-                    <Ionicons name="copy-outline" size={15} color={Colors.light.text} />
-                  </TouchableOpacity>
-                </View>
+  <TouchableOpacity
+    style={styles.addressWrapper}
+    onPress={() => handleMapNavigation(snackPlace.address)}
+  >
+    <ThemedText style={styles.addressText} numberOfLines={2} ellipsizeMode="tail">
+      {snackPlace.address}
+    </ThemedText>
+  </TouchableOpacity>
+  <TouchableOpacity
+    style={styles.inlineCopyButton}
+    onPress={() => handleCopyAddress(snackPlace.address)}
+  >
+    <Ionicons name="copy-outline" size={15} color={Colors.light.text} />
+  </TouchableOpacity>
+</View>
               </View>
               <View style={styles.detailRow}>
                 <Ionicons name="time-outline" size={24} color={Colors.light.text} style={styles.icon} />
