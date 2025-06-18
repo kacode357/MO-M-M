@@ -89,7 +89,7 @@ const UserProfile = () => {
             >
               {userInfo.fullName}
             </Text>
-            <Text style={styles.freeLabel}>Miễn phí</Text>
+        
           </View>
         </View>
         <TouchableOpacity onPress={() => router.push('/settings')}>

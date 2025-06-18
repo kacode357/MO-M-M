@@ -80,9 +80,10 @@ const Signin = () => {
   }
 
   // Store user data in AsyncStorage
-  await AsyncStorage.setItem('user_premium', JSON.stringify(premium));
+ 
   await AsyncStorage.setItem('user_id', id);
   await AsyncStorage.setItem('user_name', userNameResponse);
+  console.log('User email:', userNameResponse);
   await AsyncStorage.setItem('user_email', email);
   await AsyncStorage.setItem('user_fullname', fullname);
 
