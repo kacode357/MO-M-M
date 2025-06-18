@@ -14,7 +14,12 @@
       "backgroundColor": "#ffffff"
     },
     "ios": {
-      "supportsTablet": true
+      "supportsTablet": true,
+      "infoPlist": {
+        "NSLocationWhenInUseUsageDescription": "Ứng dụng cần quyền truy cập vị trí của bạn để hiển thị vị trí hiện tại trên bản đồ và tìm đường đi.",
+        "NSLocationAlwaysAndWhenInUseUsageDescription": "Ứng dụng cần quyền truy cập vị trí của bạn để hiển thị vị trí hiện tại và cung cấp các tính năng liên quan đến bản đồ ngay cả khi không sử dụng."
+      }
+    
     },
     "android": {
       "adaptiveIcon": {
@@ -23,6 +28,7 @@
       },
       "edgeToEdgeEnabled": true,
       "package": "com.kaluu.mm"
+    
     },
     "web": {
       "bundler": "metro",
@@ -30,7 +36,14 @@
       "favicon": "./assets/images/favicon.png"
     },
     "plugins": [
-      "expo-router"
+      "expo-router",
+      [
+        "expo-location",
+        {
+          "locationAlwaysAndWhenInUsePermission": "Ứng dụng cần quyền truy cập vị trí của bạn để hiển thị vị trí hiện tại trên bản đồ và tìm đường đi."
+        }
+      ],
+      "react-native-maps"
     ],
     "experiments": {
       "typedRoutes": true
@@ -38,7 +51,7 @@
     "extra": {
       "router": {},
       "eas": {
-        "projectId": "1c21e5a5-792f-4278-adc8-aef1ee3b3415"
+        "projectId": "d7a38847-1efb-4233-a278-5655536fdac0"
       }
     }
   }
