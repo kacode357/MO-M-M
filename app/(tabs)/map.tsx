@@ -1,12 +1,13 @@
 import AlertModal from '@/components/AlertModal';
 import { Colors } from '@/constants/Colors';
 import { Fonts } from '@/constants/Fonts';
-import { MAP_CONFIG, MAP_MESSAGES } from '@/constants/MapConstants'; // Import các hằng số mới
+import { Ionicons, MaterialIcons } from '@expo/vector-icons';
 import axios from 'axios';
 import * as Location from 'expo-location';
-import React, { useCallback, useEffect, useRef, useState } from 'react'; // Thêm useCallback
+import React, { useEffect, useRef, useState } from 'react';
 import {
   ActivityIndicator,
+  FlatList,
   Keyboard,
   StyleSheet,
   Text,
@@ -15,21 +16,34 @@ import {
   View,
 } from 'react-native';
 import MapView, { Marker, Polyline } from 'react-native-maps';
+import uuid from 'react-native-uuid';
 
-// CẤU HÌNH API KEY
-// Đảm bảo rằng biến môi trường này đã được cấu hình đúng trong file .env hoặc app.config.js
-// Ví dụ: EXPO_PUBLIC_ORS_API_KEY=your_openrouteservice_api_key
+// --- CÁC HẰNG SỐ ---
+const ORS_API_KEY = '5b3ce3597851110001cf6248c89e354a30184841becfff9d2f7b69a4';
+const OPENMAP_API_KEY = 'kKuOnsjlYksE6rRQ2gk2pzGhky4jivXk';
+const OPENMAP_BASE_URL = 'https://mapapis.openmap.vn/v1';
 
-const ORS_API_KEY = process.env.EXPO_PUBLIC_ORS_API_KEY;
+const DEFAULT_REGION = {
+  latitude: 10.7769,
+  longitude: 106.7009,
+  latitudeDelta: 0.0922,
+  longitudeDelta: 0.0421,
+};
 
 const MapScreen = () => {
   const [location, setLocation] = useState<{ latitude: number; longitude: number } | null>(null);
   const [destination, setDestination] = useState<{ latitude: number; longitude: number } | null>(null);
   const [routeCoords, setRouteCoords] = useState<{ latitude: number; longitude: number }[]>([]);
   const [searchQuery, setSearchQuery] = useState('');
-  const [loading, setLoading] = useState(true);
   const [searchLoading, setSearchLoading] = useState(false);
+  const [isRouting, setIsRouting] = useState(false);
   const [modalVisible, setModalVisible] = useState(false);
+  const [sessionToken, setSessionToken] = useState<string | null>(null);
+  const [predictions, setPredictions] = useState<any[]>([]);
+
+  const mapRef = useRef<MapView>(null);
+  const searchInputRef = useRef<TextInput>(null);
+
   const [modalConfig, setModalConfig] = useState<{
     title: string;
     message: string;
@@ -42,123 +56,128 @@ const MapScreen = () => {
     onConfirm: () => setModalVisible(false),
   });
 
-  const mapRef = useRef<MapView>(null);
-
-  // Hàm tiện ích để hiển thị modal
-  const showModal = useCallback((title: string, message: string, isSuccess: boolean = false, onConfirm: () => void = () => setModalVisible(false)) => {
-    setModalConfig({ title, message, isSuccess, onConfirm });
-    setModalVisible(true);
-  }, []);
-
   useEffect(() => {
+    setSessionToken(uuid.v4() as string);
     const fetchLocation = async () => {
       try {
         const { status } = await Location.requestForegroundPermissionsAsync();
         if (status !== 'granted') {
-          showModal(
-            MAP_MESSAGES.LOCATION_PERMISSION_DENIED_TITLE,
-            MAP_MESSAGES.LOCATION_PERMISSION_DENIED_MESSAGE,
-            false
-          );
-          setLoading(false);
+          console.warn('Permission to access location was denied');
           return;
         }
-
-        const { coords } = await Location.getCurrentPositionAsync({
-          accuracy: Location.Accuracy.High,
-        });
-        setLocation({
+        const { coords } = await Location.getCurrentPositionAsync({});
+        const userLocation = {
           latitude: coords.latitude,
           longitude: coords.longitude,
-        });
-        setLoading(false);
+        };
+        setLocation(userLocation);
+        centerOnUser(userLocation);
       } catch (error) {
-        console.error('Lỗi khi lấy vị trí:', error);
-        showModal(
-          MAP_MESSAGES.LOCATION_FETCH_ERROR_TITLE,
-          MAP_MESSAGES.LOCATION_FETCH_ERROR_MESSAGE,
-          false
-        );
-        setLoading(false);
+        console.error('Error fetching location: ', error);
       }
     };
-
     fetchLocation();
-  }, [showModal]); // Thêm showModal vào dependency array
+  }, []);
 
-  /**
-   * Geocoding với OpenStreetMap Nominatim
-   * Cần đặt User-Agent hợp lệ.
-   */
-  const geocodeWithOSM = async (query: string, specificParams: Record<string, string> = {}) => {
-    try {
-      const latDelta = MAP_CONFIG.LOCATION_DELTA_SEARCH_BOX;
-      const lonDelta = MAP_CONFIG.LOCATION_DELTA_SEARCH_BOX;
-
-      const viewbox = location ?
-        `${location.longitude - lonDelta},${location.latitude - latDelta},${location.longitude + lonDelta},${location.latitude + latDelta}`
-        : undefined;
-
-      const params = {
-        q: query,
-        format: 'json',
-        limit: 1,
-        'accept-language': 'vi',
-        ...(viewbox && { viewbox: viewbox, bounded: 1 }),
-        ...specificParams,
-      };
-
-      const response = await axios.get(MAP_CONFIG.NOMINATIM_BASE_URL, {
-        params: params,
-        headers: {
-          'User-Agent': MAP_CONFIG.NOMINATIM_USER_AGENT,
-        },
-      });
-
-      if (response.data.length > 0) {
-        const place = response.data[0];
-        console.log('Nominatim result for query:', query, '=>', place.display_name, 'Lat:', place.lat, 'Lon:', place.lon);
-        return {
-          latitude: parseFloat(place.lat),
-          longitude: parseFloat(place.lon),
-          displayName: place.display_name
-        };
-      } else {
-        console.log('No Nominatim result for query:', query, 'Full response data:', response.data);
-        return null;
-      }
-    } catch (err: any) {
-      console.error('Lỗi tìm kiếm địa điểm với Nominatim:', err.response?.data || err.message);
-      return null;
+  const centerOnUser = (loc?: { latitude: number; longitude: number } | null) => {
+    const targetLocation = loc || location;
+    if (targetLocation && mapRef.current) {
+        mapRef.current.animateToRegion({
+            ...targetLocation,
+            latitudeDelta: 0.01,
+            longitudeDelta: 0.01,
+        }, 1000);
     }
   };
 
-  /**
-   * Lấy tuyến đường từ OpenRouteService
-   * Yêu cầu ORS_API_KEY.
-   */
-  const getRouteFromORS = async (
-    start: { latitude: number; longitude: number },
-    end: { latitude: number; longitude: number }
-  ) => {
-    if (!ORS_API_KEY) {
-      console.error('OpenRouteService API Key chưa được cấu hình. Vui lòng kiểm tra biến môi trường EXPO_PUBLIC_ORS_API_KEY.');
-      showModal(
-        MAP_MESSAGES.API_KEY_MISSING_TITLE,
-        MAP_MESSAGES.API_KEY_MISSING_MESSAGE,
-        false
-      );
-      return;
+  const fetchAutocomplete = async (input: string) => {
+    if (!input.trim()) return;
+    Keyboard.dismiss();
+    setSearchLoading(true);
+    setPredictions([]);
+    try {
+      const apiParams = {
+        'apikey': OPENMAP_API_KEY,
+        input: input,
+        sessiontoken: sessionToken,
+      };
+      const response = await axios.get(`${OPENMAP_BASE_URL}/autocomplete`, { params: apiParams });
+      if (response.data.status === 'OK') {
+        setPredictions(response.data.predictions);
+      } else {
+        setPredictions([]);
+      }
+    } catch (err) {
+      console.error('Autocomplete API error:', err);
+    } finally {
+      setSearchLoading(false);
     }
+  };
 
-    const url = MAP_CONFIG.ORS_DIRECTIONS_BASE_URL;
+  const getPlaceDetails = async (placeId: string) => {
+    if (!sessionToken) return null;
+    setSearchLoading(true);
+    try {
+      const response = await axios.get(`${OPENMAP_BASE_URL}/place`, {
+        params: {
+          'apikey': OPENMAP_API_KEY,
+          ids: placeId,
+          sessiontoken: sessionToken,
+        },
+      });
+      if (response.data.features && response.data.features.length > 0) {
+        const coords = response.data.features[0].geometry.coordinates;
+        return { latitude: coords[1], longitude: coords[0] };
+      }
+      return null;
+    } catch (err) {
+      console.error('Place Details API error:', err);
+      return null;
+    } finally {
+      setSearchLoading(false);
+    }
+  };
+
+  const handleSearchPress = () => {
+    fetchAutocomplete(searchQuery);
+  };
+  
+  // CẬP NHẬT: Thêm logic zoom vào hàm này
+  const handleSuggestionPress = async (prediction: any) => {
+    setPredictions([]);
+    setSearchQuery(prediction.description);
+    const dest = await getPlaceDetails(prediction.place_id);
+    if (dest && location) {
+      setDestination(dest);
+      await getRouteFromORS(location, dest);
+
+      // THÊM MỚI: Tự động zoom để hiển thị cả điểm đầu và điểm cuối
+      if (mapRef.current) {
+        mapRef.current.fitToCoordinates([location, dest], {
+          edgePadding: {
+            top: 150, // Tăng padding trên để không bị che bởi thanh tìm kiếm
+            right: 50,
+            bottom: 50,
+            left: 50,
+          },
+          animated: true,
+        });
+      }
+
+    } else {
+        console.warn('Could not get destination details or user location is missing.');
+    }
+  };
+  
+  const getRouteFromORS = async (start: any, end: any) => {
+    setIsRouting(true);
+    const url = 'https://api.openrouteservice.org/v2/directions/driving-car/geojson';
     const body = {
       coordinates: [
         [start.longitude, start.latitude],
         [end.longitude, end.latitude],
       ],
     };
-
     try {
       const response = await axios.post(url, body, {
         headers: {
@@ -166,365 +185,209 @@ const MapScreen = () => {
           'Content-Type': 'application/json',
         },
       });
-
-      if (response.data.features && response.data.features.length > 0) {
-        const coords = response.data.features[0].geometry.coordinates.map(
-          ([lon, lat]: [number, number]) => ({
-            latitude: lat,
-            longitude: lon,
-          })
-        );
-        setRouteCoords(coords);
-        if (mapRef.current && location && destination) {
-          mapRef.current.fitToCoordinates([location, destination, ...coords], {
-            edgePadding: MAP_CONFIG.MAP_FIT_EDGE_PADDING,
-            animated: true,
-          });
-        }
-      } else {
-        showModal(
-          MAP_MESSAGES.NO_ROUTE_FOUND_TITLE,
-          MAP_MESSAGES.NO_ROUTE_FOUND_MESSAGE,
-          false
-        );
-        setRouteCoords([]);
-      }
-    } catch (error: any) {
-      console.error('Lỗi tính toán đường đi:', error.response?.data || error.message);
-      let errorMessage = `${MAP_MESSAGES.ROUTE_CALCULATION_ERROR_TITLE}: ${error.message}. Vui lòng thử lại.`;
-      if (error.response && error.response.data && error.response.data.error) {
-          errorMessage = `${MAP_MESSAGES.ROUTE_CALCULATION_ERROR_TITLE}: ${error.response.data.error.message || error.message}.`;
-      }
-      showModal(
-        MAP_MESSAGES.ROUTE_CALCULATION_ERROR_TITLE,
-        errorMessage,
-        false
+      const coords = response.data.features[0].geometry.coordinates.map(
+        ([lon, lat]: [number, number]) => ({ latitude: lat, longitude: lon })
       );
-      setRouteCoords([]);
+      setRouteCoords(coords);
+    } catch (error) {
+        console.error('Error fetching route from ORS:', error);
+    } finally {
+        setIsRouting(false);
     }
   };
-
-  const handleSearch = async () => {
-    if (!searchQuery.trim()) {
-      showModal(
-        MAP_MESSAGES.SEARCH_QUERY_EMPTY_TITLE,
-        MAP_MESSAGES.SEARCH_QUERY_EMPTY_MESSAGE,
-        false
-      );
-      return;
-    }
-    if (!location) {
-      showModal(
-        MAP_MESSAGES.NO_CURRENT_LOCATION_TITLE,
-        MAP_MESSAGES.NO_CURRENT_LOCATION_MESSAGE,
-        false
-      );
-      return;
-    }
-
-    Keyboard.dismiss();
-    setSearchLoading(true);
-    setRouteCoords([]);
-    setDestination(null);
-
-    let foundDest = null;
-
-    // Hàm tiện ích để chuẩn hóa chuỗi
-    const normalizeString = (str: string) => str.toLowerCase()
-      .replace(/phường|p\./gi, 'phường ') // Chuẩn hóa "p." thành "phường "
-      .replace(/quận|q\./gi, 'quận ')   // Chuẩn hóa "q." thành "quận "
-      .replace(/thành phố hồ chí minh|hồ chí minh|tphcm|hcm/gi, MAP_CONFIG.DEFAULT_CITY.toLowerCase()) // Chuẩn hóa tên thành phố
-      .replace(/\s+/g, ' ') // Thay thế nhiều khoảng trắng bằng một khoảng trắng
-      .trim();
-
-    const originalQuery = searchQuery.trim();
-    // Không normalize originalQuery để giữ nguyên ý định của người dùng cho các search API
-    // const normalizedQuery = normalizeString(originalQuery); // Có thể không cần dùng normalizedQuery trực tiếp cho các request API
-
-    // Tách các thành phần của địa chỉ
-    const addressParts = originalQuery.split(',').map(part => part.trim());
-    let street = '';
-    let ward = '';
-    let district = '';
-    const city = MAP_CONFIG.DEFAULT_CITY;
-
-    // Cố gắng phân tích cú pháp các phần của địa chỉ từ truy vấn gốc
-    for (const part of addressParts) {
-      const lowerPart = part.toLowerCase();
-      if (lowerPart.includes('phường') || lowerPart.includes('p.')) {
-        ward = part;
-      } else if (lowerPart.includes('quận') || lowerPart.includes('q.')) {
-        district = part;
-      } else if (!street && (lowerPart.includes('đường') || lowerPart.match(/^\d+/) || lowerPart.match(/\d+\s+[^,]+/))) {
-        // Đây có thể là số nhà hoặc tên đường. Cần một logic phức tạp hơn
-        // Tạm thời coi đây là phần đầu tiên có thể là tên đường/số nhà nếu chưa có street
-        street = part;
-      }
-    }
-    // Nếu chưa có street, và phần đầu tiên của địa chỉ không phải phường/quận, coi đó là street
-    if (!street && addressParts.length > 0 && !(addressParts[0].toLowerCase().includes('phường') || addressParts[0].toLowerCase().includes('p.'))) {
-        street = addressParts[0];
-    }
-    // Nếu chỉ có một phần, coi toàn bộ là street
-    if (!street && addressParts.length === 1) {
-        street = originalQuery;
-    }
-
-    console.log(`Parsed parts: Street: "${street}", Ward: "${ward}", District: "${district}"`);
-
-    // Các chiến lược tìm kiếm theo thứ tự ưu tiên
-    const searchStrategies = [
-        // 1. Truy vấn gốc + ngữ cảnh đầy đủ
-        `${originalQuery}, ${city}, ${MAP_CONFIG.DEFAULT_COUNTRY}`,
-        // 2. Truy vấn gốc + ngữ cảnh TP. Hồ Chí Minh (biến thể)
-        `${originalQuery}, TP. ${city}, ${MAP_CONFIG.DEFAULT_COUNTRY}`,
-        // 3. Cố gắng xây dựng địa chỉ với các phần đã phân tích
-        (street && ward && district) ? `${street}, ${ward}, ${district}, ${city}, ${MAP_CONFIG.DEFAULT_COUNTRY}` : '',
-        (street && district && !ward) ? `${street}, ${district}, ${city}, ${MAP_CONFIG.DEFAULT_COUNTRY}` : '',
-        (ward && district) ? `${ward}, ${district}, ${city}, ${MAP_CONFIG.DEFAULT_COUNTRY}` : '',
-        // 4. Truy vấn gốc không có thêm ngữ cảnh
-        originalQuery,
-        // 5. Thử với các từ viết tắt được thay thế (chuyển p./q. thành Phường/Quận)
-        originalQuery.replace(/P\.(\d+)/gi, 'Phường $1').replace(/Q\.(\d+)/gi, 'Quận $1'),
-        // 6. Thử chỉ tên đường hoặc số nhà (nếu có)
-        street,
-    ].filter(Boolean); // Lọc bỏ các chuỗi rỗng
-
-    // Thêm các truy vấn bổ sung với các biến thể
-    const additionalQueries = [
-      `${searchQuery}, ${city}, ${MAP_CONFIG.DEFAULT_COUNTRY}`,
-      `${searchQuery}, TP. ${city}, ${MAP_CONFIG.DEFAULT_COUNTRY}`,
-      `${searchQuery}, ${MAP_CONFIG.DEFAULT_COUNTRY}`,
-    ].filter(q => q.trim() !== '');
-
-    const allSearchQueries = [...new Set([...searchStrategies, ...additionalQueries])]; // Sử dụng Set để loại bỏ trùng lặp
-
-    console.log('Attempting search with queries:', allSearchQueries);
-
-    for (const query of allSearchQueries) {
-        if (!query) continue;
-
-        foundDest = await geocodeWithOSM(query);
-        if (foundDest) {
-            console.log(`Tìm thấy địa điểm với Nominatim cho: "${query}"`);
-            break;
-        }
-    }
-
-    if (foundDest) {
-      setDestination(foundDest);
-      await getRouteFromORS(location, foundDest);
-    } else {
-      showModal(
-        MAP_MESSAGES.LOCATION_NOT_FOUND_TITLE,
-        MAP_MESSAGES.LOCATION_NOT_FOUND_MESSAGE(searchQuery),
-        false
-      );
-    }
-    setSearchLoading(false);
-  };
-
-  if (loading) {
-    return (
-      <View style={styles.centered}>
-        <ActivityIndicator size="large" color={Colors.light.tint} />
-        <Text style={styles.loadingText}>{MAP_MESSAGES.LOADING_LOCATION}</Text>
-      </View>
-    );
-  }
-
-  if (!location) {
-    return (
-      <View style={styles.centered}>
-        <Text style={styles.loadingText}>{MAP_MESSAGES.MAP_LOAD_ERROR}</Text>
-        <TouchableOpacity
-          style={styles.retryButton}
-          onPress={() => {
-            setLoading(true); // Đặt lại loading để thử lại quá trình lấy vị trí
-            showModal(
-                MAP_MESSAGES.RETRY_BUTTON_TEXT, // Title cho modal thử lại
-                MAP_MESSAGES.RETRY_PROMPT,
-                false,
-                () => { // Callback để ẩn modal và thử lại
-                    setModalVisible(false);
-                    // Có thể gọi lại fetchLocation ở đây, nhưng tốt hơn là reload toàn bộ ứng dụng hoặc
-                    // hướng dẫn người dùng cấp quyền
-                    // For simplicity, we just set loading to true to re-trigger useEffect on next render
-                }
-            );
-          }}
-        >
-          <Text style={styles.retryButtonText}>{MAP_MESSAGES.RETRY_BUTTON_TEXT}</Text>
-        </TouchableOpacity>
-        <AlertModal
-          visible={modalVisible}
-          title={modalConfig.title}
-          message={modalConfig.message}
-          isSuccess={modalConfig.isSuccess}
-          showCancel={false}
-          confirmText={MAP_MESSAGES.CONFIRM_BUTTON_TEXT}
-          onConfirm={modalConfig.onConfirm}
-        />
-      </View>
-    );
-  }
 
   return (
     <View style={styles.container}>
       <MapView
         ref={mapRef}
         style={styles.map}
-        initialRegion={{
-          latitude: location.latitude,
-          longitude: location.longitude,
-          latitudeDelta: MAP_CONFIG.MAP_INITIAL_LATITUDE_DELTA,
-          longitudeDelta: MAP_CONFIG.MAP_INITIAL_LONGITUDE_DELTA,
-        }}
+        initialRegion={DEFAULT_REGION}
+        showsUserLocation={true}
+        showsMyLocationButton={false}
       >
-        <Marker
-          coordinate={location}
-          title={MAP_MESSAGES.YOUR_LOCATION_MARKER_TITLE}
-          pinColor={Colors.light.primaryText}
-        />
-        {destination && (
-          <Marker
-            coordinate={destination}
-            title={MAP_MESSAGES.DESTINATION_MARKER_TITLE}
-            pinColor={Colors.light.success}
-          />
+        {destination && ( 
+          <Marker 
+            coordinate={destination} 
+            title="Điểm đến" 
+            pinColor={Colors.light.tint}
+          /> 
         )}
-        {routeCoords.length > 0 && (
-          <Polyline
-            coordinates={routeCoords}
-            strokeWidth={MAP_CONFIG.ROUTE_STROKE_WIDTH}
-            strokeColor={Colors.light.tint}
-          />
+        {routeCoords.length > 0 && ( 
+          <Polyline 
+            coordinates={routeCoords} 
+            strokeColor={Colors.light.primaryText} 
+            strokeWidth={4} 
+          /> 
         )}
       </MapView>
 
-      <View style={styles.searchBox}>
-        <TextInput
-          placeholder={`${MAP_MESSAGES.SEARCH_PLACEHOLDER}`}
-          placeholderTextColor={Colors.light.icon}
-          value={searchQuery}
-          onChangeText={setSearchQuery}
-          style={styles.input}
-          onSubmitEditing={handleSearch}
-        />
-        <TouchableOpacity style={styles.searchButton} onPress={handleSearch}>
-          <Text style={styles.searchButtonText}>{MAP_MESSAGES.SEARCH_BUTTON_TEXT}</Text>
-        </TouchableOpacity>
-      </View>
-
-      {searchLoading && (
-        <View style={styles.loadingOverlay}>
-          <View style={styles.loadingContainer}>
-            <ActivityIndicator size="large" color={Colors.light.whiteText} />
-            <Text style={styles.loadingSearchText}>{MAP_MESSAGES.SEARCHING}</Text>
-          </View>
+      <View style={styles.searchContainer}>
+        <View style={styles.searchBox}>
+          <TextInput
+            ref={searchInputRef}
+            placeholder="Nhập địa điểm..."
+            placeholderTextColor={Colors.light.icon}
+            value={searchQuery}
+            onChangeText={setSearchQuery}
+            style={styles.input}
+            onFocus={() => {
+              setRouteCoords([]);
+              setDestination(null);
+            }}
+          />
+          {searchQuery.length > 0 && (
+            <TouchableOpacity onPress={() => setSearchQuery('')} style={styles.clearButton}>
+                <Ionicons name="close-circle" size={22} color={Colors.light.icon} />
+            </TouchableOpacity>
+          )}
+          <TouchableOpacity style={styles.searchButton} onPress={handleSearchPress}>
+            <Text style={styles.searchButtonText}>Tìm</Text>
+          </TouchableOpacity>
         </View>
+
+        {searchLoading && <ActivityIndicator style={{ marginTop: 10 }} size="small" color={Colors.light.tint} />}
+        {predictions.length > 0 && (
+          <View style={styles.suggestionsContainer}>
+            <FlatList
+              data={predictions}
+              keyExtractor={(item) => item.place_id}
+              renderItem={({ item }) => (
+                <TouchableOpacity style={styles.suggestionItem} onPress={() => handleSuggestionPress(item)}>
+                  <Text style={styles.suggestionMainText}>{item.structured_formatting.main_text}</Text>
+                  <Text style={styles.suggestionSecondaryText}>{item.structured_formatting.secondary_text}</Text>
+                </TouchableOpacity>
+              )}
+            />
+            <TouchableOpacity style={styles.closeButton} onPress={() => setPredictions([])}>
+              <Text style={styles.closeButtonText}>Đóng</Text>
+            </TouchableOpacity>
+          </View>
+        )}
+      </View>
+      
+      {location && (
+        <TouchableOpacity style={styles.locationButton} onPress={() => centerOnUser()}>
+            <MaterialIcons name="my-location" size={24} color={Colors.light.primaryText} />
+        </TouchableOpacity>
       )}
 
-      <AlertModal
-        visible={modalVisible}
-        title={modalConfig.title}
-        message={modalConfig.message}
-        isSuccess={modalConfig.isSuccess}
-        showCancel={false}
-        confirmText={MAP_MESSAGES.CONFIRM_BUTTON_TEXT}
-        onConfirm={modalConfig.onConfirm}
-      />
+      <AlertModal visible={modalVisible} {...modalConfig} />
+      
+      {isRouting && (
+        <View style={styles.loadingOverlay}>
+            <ActivityIndicator size="large" color={Colors.light.whiteText} />
+            <Text style={styles.loadingText}>Đang tìm đường...</Text>
+        </View>
+      )}
     </View>
   );
 };
 
 const styles = StyleSheet.create({
-  container: {
-    flex: 1,
-    backgroundColor: Colors.light.background,
-  },
-  map: {
-    flex: 1,
-  },
-  searchBox: {
+  container: { flex: 1 },
+  map: { flex: 1 },
+  searchContainer: {
     position: 'absolute',
     top: 50,
     left: 15,
     right: 15,
+  },
+  searchBox: {
+    flexDirection: 'row',
+    alignItems: 'center',
     backgroundColor: Colors.light.background,
     borderRadius: 12,
-    padding: 12,
+    paddingHorizontal: 8,
+    paddingVertical: 4,
     elevation: 8,
     shadowColor: Colors.light.blackText,
     shadowOffset: { width: 0, height: 2 },
     shadowOpacity: 0.2,
     shadowRadius: 4,
-    flexDirection: 'row',
-    alignItems: 'center',
   },
   input: {
     flex: 1,
     paddingVertical: 10,
     paddingHorizontal: 12,
-    borderRadius: 8,
-    backgroundColor: Colors.light.grayBackground,
     color: Colors.light.text,
     fontFamily: Fonts.Comfortaa.Regular,
     fontSize: 16,
   },
+  clearButton: {
+    padding: 5,
+  },
   searchButton: {
     backgroundColor: Colors.light.primaryText,
-    paddingVertical: 10,
+    paddingVertical: 8,
     paddingHorizontal: 16,
     borderRadius: 8,
-    marginLeft: 10,
+    marginLeft: 8,
   },
   searchButtonText: {
     color: Colors.light.whiteText,
     fontFamily: Fonts.Comfortaa.Bold,
     fontSize: 16,
   },
-  centered: {
-    flex: 1,
+  suggestionsContainer: {
+    backgroundColor: Colors.light.background,
+    borderRadius: 12,
+    marginTop: 8,
+    elevation: 8,
+    maxHeight: 350,
+  },
+  suggestionItem: {
+    padding: 15,
+    borderBottomWidth: 1,
+    borderBottomColor: Colors.light.grayBackground,
+  },
+  suggestionMainText: {
+    fontFamily: Fonts.Comfortaa.Bold,
+    fontSize: 15,
+  },
+  suggestionSecondaryText: {
+    fontFamily: Fonts.Comfortaa.Regular,
+    fontSize: 13,
+    color: Colors.light.icon,
+  },
+  closeButton: {
+    padding: 15,
+    alignItems: 'center',
+    backgroundColor: Colors.light.grayBackground,
+    borderBottomLeftRadius: 12,
+    borderBottomRightRadius: 12,
+  },
+  closeButtonText: {
+    fontFamily: Fonts.Comfortaa.Bold,
+    fontSize: 16,
+    color: Colors.light.primaryText
+  },
+  locationButton: {
+    position: 'absolute',
+    bottom: 30,
+    right: 20,
+    backgroundColor: Colors.light.background,
+    width: 50,
+    height: 50,
+    borderRadius: 25,
     justifyContent: 'center',
     alignItems: 'center',
-    backgroundColor: Colors.light.background,
-  },
-  loadingText: {
-    marginTop: 10,
-    color: Colors.light.text,
-    fontFamily: Fonts.Comfortaa.Medium,
-    fontSize: 18,
+    elevation: 8,
+    shadowColor: Colors.light.blackText,
+    shadowOffset: { width: 0, height: 2 },
+    shadowOpacity: 0.25,
+    shadowRadius: 4,
   },
   loadingOverlay: {
     ...StyleSheet.absoluteFillObject,
-    backgroundColor: 'rgba(0, 0, 0, 0.5)',
+    backgroundColor: 'rgba(0, 0, 0, 0.6)',
     justifyContent: 'center',
     alignItems: 'center',
   },
-  loadingContainer: {
-    backgroundColor: Colors.light.primaryText,
-    padding: 20,
-    borderRadius: 12,
-    alignItems: 'center',
-  },
-  loadingSearchText: {
+  loadingText: {
     marginTop: 10,
     color: Colors.light.whiteText,
-    fontFamily: Fonts.Comfortaa.SemiBold,
-    fontSize: 20,
-  },
-  retryButton: {
-    marginTop: 20,
-    backgroundColor: Colors.light.tint,
-    paddingVertical: 10,
-    paddingHorizontal: 20,
-    borderRadius: 8,
-  },
-  retryButtonText: {
-    color: Colors.light.whiteText,
+    fontSize: 18,
     fontFamily: Fonts.Comfortaa.Bold,
-    fontSize: 16,
   },
 });
 
