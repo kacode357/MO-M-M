@@ -14,6 +14,7 @@ import { router, useLocalSearchParams } from "expo-router";
 import { useEffect, useState } from "react";
 import {
   FlatList,
+  Linking,
   ScrollView,
   StyleSheet,
   TouchableOpacity,
@@ -27,6 +28,7 @@ interface SnackPlaceDetailData {
   openingHour: string;
   image: string;
   description: string;
+  phoneNumber: string;
 }
 
 interface Dish {
@@ -105,6 +107,22 @@ const SnackPlaceDetail = () => {
       setLoading(false);
     }
   }, [snackPlaceId]);
+  const handleCall = async (phoneNumber: string) => {
+    if (phoneNumber) {
+      try {
+        await Linking.openURL(`tel:${phoneNumber}`);
+      } catch (error) {
+        console.error("Failed to open phone dialer", error);
+        setModalConfig({
+          title: "Lỗi",
+          message: "Không thể mở trình gọi điện trên thiết bị này.",
+          isSuccess: false,
+          onConfirm: () => setModalVisible(false),
+        });
+        setModalVisible(true);
+      }
+    }
+  };
 
   const formatTime = (time: string): string => {
     if (!time || !/^\d{2}:\d{2}:\d{2}$/.test(time)) {
@@ -180,12 +198,6 @@ const SnackPlaceDetail = () => {
     }
   };
 
-  // const handleMapNavigation = (address: string) => {
-  //   router.push({
-  //     pathname: "/(snack-place)/map-location",
-  //     params: { address },
-  //   });
-  // };
 
   const renderDishItem = ({ item }: { item: Dish }) => (
     <View style={styles.dishItem}>
@@ -331,6 +343,23 @@ const SnackPlaceDetail = () => {
                   </TouchableOpacity>
                 </View>
               </View>
+               {snackPlace.phoneNumber && (
+                <View style={styles.detailRow}>
+                  <Ionicons
+                    name="call-outline"
+                    size={24}
+                    color={Colors.light.text}
+                    style={styles.icon}
+                  />
+                  <TouchableOpacity
+                    onPress={() => handleCall(snackPlace.phoneNumber)}
+                  >
+                    <ThemedText style={[styles.detail, styles.phoneText]}>
+                      {snackPlace.phoneNumber}
+                    </ThemedText>
+                  </TouchableOpacity>
+                </View>
+              )}
               <View style={styles.detailRow}>
                 <Ionicons
                   name="time-outline"
@@ -515,6 +544,10 @@ const styles = StyleSheet.create({
     alignItems: "flex-start",
     marginBottom: 5,
   },
+  phoneText: {
+    color: Colors.light.tint, 
+   
+  },
   addressContainer: { flex: 1, flexDirection: "row", flexWrap: "wrap" },
   addressWrapper: { flexDirection: "row", alignItems: "center", flex: 1 },
   addressText: {
@@ -522,7 +555,7 @@ const styles = StyleSheet.create({
     fontSize: 13,
     color: Colors.light.primaryText,
     flexShrink: 1,
-    maxWidth: "90%",
+   
   },
   detail: {
     fontFamily: Fonts.Comfortaa.Regular,
@@ -530,7 +563,7 @@ const styles = StyleSheet.create({
     color: Colors.light.icon,
   },
   icon: { marginRight: 8 },
-  inlineCopyButton: { padding: 4, marginTop: -15, marginLeft: 8 },
+  inlineCopyButton: { marginLeft: 8 },
   reviewButton: {
     backgroundColor: Colors.light.primaryText,
     padding: 8,

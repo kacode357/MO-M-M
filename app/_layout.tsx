@@ -99,17 +99,6 @@ export default function RootLayout() {
     { name: '(snack-place)/snack-place-detail',  options: { headerShown: false } },
     { name: '(snack-place)/review',  options: { headerShown: false } },
      { name: '(snack-place)/comments',  options: { headerShown: false } },
-    { name: '(snack-place)/map-location', options: {
-        headerShown: true,
-        headerTitle: 'Tìm Kiếm Quán Ăn',
-        headerStyle: styles.headerWithTitle,
-        headerTitleStyle: styles.headerTitle,
-        headerLeft: () => (
-          <TouchableOpacity onPress={() => router.back()}>
-            <Ionicons name="arrow-back" size={24} color="#000" />
-          </TouchableOpacity>
-        ),
-      }, },
     {
       name: '(user)/settings',
       options: {
