@@ -40,8 +40,8 @@ const Signin = () => {
     Keyboard.dismiss();
   };
 
- const handleSignin = async () => {
-  // Validate input fields
+const handleSignin = async () => {
+  // 1. Xác thực đầu vào (giữ nguyên)
   if (!userName || !password) {
     setModalConfig({
       title: 'Lỗi',
@@ -51,7 +51,6 @@ const Signin = () => {
     return;
   }
 
-  // Validate username format
   if (!/^[a-z0-9_-]+$/.test(userName)) {
     setModalConfig({
       title: 'Lỗi',
@@ -61,35 +60,49 @@ const Signin = () => {
     return;
   }
 
+  // Bắt đầu quá trình tải
   setIsLoading(true);
-  // No try-catch to avoid handling API errors
-  const loginResponse = await LoginUserApi({ userName, password });
-  const { accessToken, refreshToken } = loginResponse.data;
-  await AsyncStorage.setItem('accessToken', accessToken);
-  await AsyncStorage.setItem('refreshToken', refreshToken);
 
-  const userResponse = await GetCurrentUserApi();
-  const { premium, id, userName: userNameResponse, email, fullname, roles } = userResponse.data;
-  console.log('User roles:', roles[0]);
+  try {
+    // 2. Bắt đầu khối try: chứa các hoạt động có thể gây lỗi
+    const loginResponse = await LoginUserApi({ userName, password });
+    const { accessToken, refreshToken } = loginResponse.data;
+    await AsyncStorage.setItem('accessToken', accessToken);
+    await AsyncStorage.setItem('refreshToken', refreshToken);
 
-  // Check if the user has the User role
-  if (roles[0] !== 'User') {
-    console.log('Access denied: User does not have User role');
+    const userResponse = await GetCurrentUserApi();
+    const { premium, id, userName: userNameResponse, email, fullname, roles } = userResponse.data;
+    console.log('User roles:', roles[0]);
+
+    // Kiểm tra quyền của người dùng
+    if (roles[0] !== 'User') {
+      console.log('Access denied: User does not have User role');
+      setIsLoading(false); // Dừng tải nếu không có quyền
+      // Tùy chọn: Hiển thị thông báo cho người dùng về việc không có quyền
+      setModalConfig({
+        title: 'Truy cập bị từ chối',
+        message: 'Bạn không có quyền để đăng nhập vào ứng dụng này.',
+      });
+      setModalVisible(true);
+      return;
+    }
+
+    // Lưu trữ thông tin người dùng
+    await AsyncStorage.setItem('user_id', id);
+    await AsyncStorage.setItem('user_name', userNameResponse);
+    console.log('User email:', userNameResponse);
+    await AsyncStorage.setItem('user_email', email);
+    await AsyncStorage.setItem('user_fullname', fullname);
+
+    // Chuyển hướng khi thành công
+    router.push('/(tabs)');
+    setIsLoading(false); // Dừng tải khi hoàn tất thành công
+
+  } catch (error) {
+   
     setIsLoading(false);
-    return;
+   
   }
-
-  // Store user data in AsyncStorage
- 
-  await AsyncStorage.setItem('user_id', id);
-  await AsyncStorage.setItem('user_name', userNameResponse);
-  console.log('User email:', userNameResponse);
-  await AsyncStorage.setItem('user_email', email);
-  await AsyncStorage.setItem('user_fullname', fullname);
-
-  // Navigate to tabs
-  router.push('/(tabs)');
-  setIsLoading(false);
 };
   const styles = signinStyles(colorScheme, isLoading);
 

@@ -19,9 +19,9 @@ import MapView, { Marker, Polyline } from 'react-native-maps';
 import uuid from 'react-native-uuid';
 
 // --- CÁC HẰNG SỐ ---
-const ORS_API_KEY = '5b3ce3597851110001cf6248c89e354a30184841becfff9d2f7b69a4';
-const OPENMAP_API_KEY = 'kKuOnsjlYksE6rRQ2gk2pzGhky4jivXk';
-const OPENMAP_BASE_URL = 'https://mapapis.openmap.vn/v1';
+const ORS_API_KEY = process.env.EXPO_PUBLIC_ORS_API_KEY;
+const OPENMAP_API_KEY = process.env.EXPO_PUBLIC_OPENMAP_API_KEY;
+const OPENMAP_BASE_URL = process.env.EXPO_PUBLIC_OPENMAP_BASE_URL;
 
 const DEFAULT_REGION = {
   latitude: 10.7769,
