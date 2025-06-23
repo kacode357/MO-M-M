@@ -28,5 +28,15 @@ const deleteReview = async (reviewId: string) => {
     });
     return response.data;
 };
-export { createReview, deleteReview, getAverageRate, getReviewsBySnackPlaceId, recommendReview };
+const getAllReviewsAndRepliesBySnackPlaceId = async (snackPlaceId: string) => {
+  const response = await skipNotiAxiosInstance.get('/api/reviews/getAllReviewsAndRepliesBySnackPlaceId', {
+    params: { snackPlaceId }
+  });
+  return response.data;
+};
+const createReply = async (data: { reviewId: string | null; parentReplyId: string | null; content: string; userId: string }) => {
+    const response = await defaultAxiosInstance.post('/api/Reply/create', data);
+    return response.data;
+};
+export { createReply, createReview, deleteReview, getAllReviewsAndRepliesBySnackPlaceId, getAverageRate, getReviewsBySnackPlaceId, recommendReview };
 
