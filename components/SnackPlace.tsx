@@ -3,11 +3,19 @@ import { ThemedView } from '@/components/ThemedView';
 import { Colors } from '@/constants/Colors';
 import { Fonts } from '@/constants/Fonts';
 import { recordSnackPlaceClick, searchSnackPlaces } from '@/services/snackplace.services';
-import AsyncStorage from '@react-native-async-storage/async-storage'; // Import AsyncStorage
+import { Ionicons } from '@expo/vector-icons';
+import AsyncStorage from '@react-native-async-storage/async-storage';
 import { Image } from 'expo-image';
 import { router } from 'expo-router';
 import { useEffect, useState } from 'react';
 import { FlatList, StyleSheet, TouchableOpacity, View } from 'react-native';
+
+interface PremiumPackage {
+  isActive: boolean;
+  packageId: number;
+  packageName: string;
+  purchaseDate: string;
+}
 
 interface SnackPlaceData {
   snackPlaceId: string;
@@ -18,6 +26,7 @@ interface SnackPlaceData {
   openingHour: string;
   businessModelName: string;
   image: string;
+  premiumPackage?: PremiumPackage;
 }
 
 const SnackPlace = () => {
@@ -44,7 +53,6 @@ const SnackPlace = () => {
         status: true,
       };
       const response = await searchSnackPlaces(params);
-     
       if (response.status === 200 && Array.isArray(response.data.pageData)) {
         const newData = response.data.pageData;
         setSnackPlaces((prev) => (reset ? newData : [...prev, ...newData]));
@@ -111,7 +119,6 @@ const SnackPlace = () => {
   const handleCardPress = async (snackPlaceId: string) => {
     try {
       const userId = await AsyncStorage.getItem('user_id');
-      console.log(`User ID: ${userId}, Snack Place ID: ${snackPlaceId}`);
       if (userId) {
         await recordSnackPlaceClick(userId, snackPlaceId);
         console.log(`Click recorded for snackPlaceId: ${snackPlaceId}`);
@@ -133,7 +140,17 @@ const SnackPlace = () => {
           onError={() => console.log(`Failed to load image for ${item.placeName}`)}
         />
         <ThemedView style={styles.cardContent}>
-          <ThemedText style={styles.cardTitle}>{item.placeName}</ThemedText>
+          <View style={styles.titleContainer}>
+            {item.premiumPackage?.isActive && (
+              <Ionicons
+                name="star"
+                size={16}
+                color="#FFD700"
+                style={styles.premiumIcon}
+              />
+            )}
+            <ThemedText style={styles.cardTitle}>{item.placeName}</ThemedText>
+          </View>
           <ThemedText style={styles.cardDetail}>
             <ThemedText style={styles.label}>Giờ mở cửa: </ThemedText>
             {formatTime(item.openingHour)}
@@ -209,11 +226,18 @@ const styles = StyleSheet.create({
     padding: 12,
     justifyContent: 'center',
   },
+  titleContainer: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    marginBottom: 8,
+  },
   cardTitle: {
     fontFamily: Fonts.Comfortaa.Bold,
     fontSize: 18,
     color: Colors.light.text,
-    marginBottom: 8,
+  },
+  premiumIcon: {
+    marginRight: 6,
   },
   cardDetail: {
     fontFamily: Fonts.Comfortaa.Regular,

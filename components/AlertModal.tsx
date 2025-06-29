@@ -16,6 +16,7 @@ interface AlertModalProps {
   onConfirm: () => void;
 }
 
+
 const AlertModal: React.FC<AlertModalProps> = ({
   visible,
   title,
@@ -32,7 +33,7 @@ const AlertModal: React.FC<AlertModalProps> = ({
   const styles = StyleSheet.create({
     modalContainer: {
       flex: 1,
-      backgroundColor: 'rgba(0, 0, 0, 0.5)', // Semi-transparent background
+      backgroundColor: 'rgba(0, 0, 0, 0.5)', // Semi-transparent 
       justifyContent: 'center',
       alignItems: 'center',
     },

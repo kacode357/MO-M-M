@@ -77,34 +77,15 @@ const Settings = () => {
         <Text style={styles.rowText}>Đổi mật khẩu</Text>
         <Ionicons name="chevron-forward" size={20} color={Colors[colorScheme].text} />
       </TouchableOpacity>
-      <TouchableOpacity style={styles.row}>
-        <Text style={styles.rowText}>Địa Chỉ</Text>
-        <Ionicons name="chevron-forward" size={20} color={Colors[colorScheme].text} />
-
-      </TouchableOpacity>
-      <TouchableOpacity style={styles.row}>
-        <Text style={styles.rowText}>Tài khoản / Thẻ Ngân hàng</Text>
-        <Ionicons name="chevron-forward" size={20} color={Colors[colorScheme].text} />
-      </TouchableOpacity>
-
+  
       <Text style={styles.sectionTitle}>Cài đặt</Text>
-      <TouchableOpacity style={styles.row}>
-        <Text style={styles.rowText}>Cài đặt Chat</Text>
-        <Ionicons name="chevron-forward" size={20} color={Colors[colorScheme].text} />
-      </TouchableOpacity>
-      <TouchableOpacity style={styles.row}>
-        <Text style={styles.rowText}>Cài đặt Thông báo</Text>
-        <Ionicons name="chevron-forward" size={20} color={Colors[colorScheme].text} />
-      </TouchableOpacity>
-      <TouchableOpacity style={styles.row}>
-        <Text style={styles.rowText}>Cài đặt riêng tư</Text>
-        <Ionicons name="chevron-forward" size={20} color={Colors[colorScheme].text} />
-      </TouchableOpacity>
-      <TouchableOpacity style={styles.row}>
+      <TouchableOpacity 
+        style={styles.row}
+        onPress={() => router.push('/(settings)/language')} // Navigate to the new language settings screen
+      >
         <Text style={styles.rowText}>Ngôn ngữ</Text>
         <Ionicons name="chevron-forward" size={20} color={Colors[colorScheme].text} />
       </TouchableOpacity>
-      
 
       <TouchableOpacity onPress={handleLogout}>
         <Text style={styles.logoutText}>Đăng xuất</Text>

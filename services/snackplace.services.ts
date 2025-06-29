@@ -53,5 +53,21 @@ const recordSnackPlaceClick = async (userId: string, snackPlaceId: string) => {
   });
   return response.data;
 };
-export { createSnackPlace, getSnackPlaceById, getSnackPlaceByIdSkipAll, recordSnackPlaceClick, searchSnackPlaces };
+const getAllSnackPlaceAttributes = async () => {
+  const response = await skipNotiAxiosInstance.get('/api/SnackPlaces/getAllAttributes');
+  return response.data;
+};
+interface FilterSnackPlacesParams {
+  priceFrom: number;
+  priceTo: number;
+  tasteIds: string[];
+  dietIds: string[];
+  foodTypeIds: string[];
+}
+
+const filterSnackPlaces = async (params: FilterSnackPlacesParams) => {
+  const response = await skipNotiAxiosInstance.post('/api/SnackPlaces/filter', params);
+  return response.data;
+};
+export { createSnackPlace, filterSnackPlaces, getAllSnackPlaceAttributes, getSnackPlaceById, getSnackPlaceByIdSkipAll, recordSnackPlaceClick, searchSnackPlaces };
 

@@ -1,7 +1,7 @@
 import { defaultAxiosInstance, skipAllNotiAxiosInstance, skipNotiAxiosInstance } from '@/config/axios.customize';
 
 const createReview = async (data: { snackPlaceId: string; userId: string; tasteRating: number; priceRating: number; sanitaryRating: number; textureRating: number; convenienceRating: number; image: string; comment: string }) => {
-    const response = await defaultAxiosInstance.post('/api/reviews/create', data);
+    const response = await skipNotiAxiosInstance.post('/api/reviews/create', data);
     return response.data;
 };
 const getAverageRate = async (snackPlaceId: string) => {

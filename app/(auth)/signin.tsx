@@ -51,14 +51,15 @@ const handleSignin = async () => {
     return;
   }
 
-  if (!/^[a-z0-9_-]+$/.test(userName)) {
-    setModalConfig({
-      title: 'Lỗi',
-      message: 'Tên đăng nhập chỉ được chứa chữ thường, số, dấu gạch dưới hoặc gạch ngang, không chứa khoảng trắng hoặc chữ hoa',
-    });
-    setModalVisible(true);
-    return;
-  }
+  if (!/^[a-zA-Z0-9_-]+$/.test(userName)) {
+  setModalConfig({
+    title: 'Lỗi',
+    message: 'Tên đăng nhập chỉ được chứa chữ cái, số, dấu gạch dưới hoặc gạch ngang, không chứa khoảng trắng hoặc ký tự đặc biệt',
+  });
+  setModalVisible(true);
+  return;
+}
+
 
   // Bắt đầu quá trình tải
   setIsLoading(true);

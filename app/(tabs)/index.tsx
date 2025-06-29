@@ -2,9 +2,12 @@ import Introduction from '@/components/Introduction';
 import Search from '@/components/Search';
 import SnackPlace from '@/components/SnackPlace';
 import { ThemedView } from '@/components/ThemedView';
+import { useState } from 'react';
 import { Keyboard, Platform, StyleSheet, TouchableWithoutFeedback } from 'react-native';
 
 export default function HomeScreen() {
+  const [isSearching, setIsSearching] = useState(false);
+
   const dismissKeyboard = () => {
     Keyboard.dismiss();
   };
@@ -12,9 +15,13 @@ export default function HomeScreen() {
   return (
     <TouchableWithoutFeedback onPress={dismissKeyboard}>
       <ThemedView style={styles.container}>
-        <Search />
-        <Introduction />
-        <SnackPlace />
+        <Search onSearchStateChange={setIsSearching} />
+        {!isSearching && (
+          <>
+            <Introduction />
+            <SnackPlace />
+          </>
+        )}
       </ThemedView>
     </TouchableWithoutFeedback>
   );
