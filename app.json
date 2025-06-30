@@ -2,7 +2,7 @@
   "expo": {
     "name": "Măm Map",
     "slug": "m-m",
-    "version": "2.0.5",
+    "version": "2.0.6",
     "orientation": "portrait",
     "icon": "./assets/images/logo-app.png",
     "scheme": "mm",
@@ -44,7 +44,7 @@
     "extra": {
       "router": {},
       "eas": {
-        "projectId": "82c89218-9791-43cb-a1d8-f0f6903f1acb"
+        "projectId": "1821a3b9-25d2-4137-b295-65763b13deee"
       }
     }
   }

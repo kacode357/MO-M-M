@@ -1,4 +1,3 @@
-import AsyncStorage from '@react-native-async-storage/async-storage';
 import React, { useCallback, useEffect, useRef, useState } from 'react';
 import {
   ActivityIndicator,
@@ -18,7 +17,8 @@ import {
 import * as Animatable from 'react-native-animatable';
 import { Colors } from '../../constants/Colors';
 import { Fonts } from '../../constants/Fonts';
-import { geminiApiClient } from '../../services/GeminiApiClient';
+// Thay thế import này bằng import từ services/botai.services.ts
+import { askGemini } from '../../services/botai.services'; // <--- CHỈNH CHỖ NÀY
 
 interface ChatMessage {
   role: 'user' | 'bot';
@@ -147,7 +147,7 @@ const TypewriterText = React.memo(
       setDisplayedText('');
       indexRef.current = 0;
       setIsComplete(false);
-      stopAnimation(); 
+      stopAnimation();
 
       rafRef.current = requestAnimationFrame(updateText);
 
@@ -210,10 +210,15 @@ const useChat = () => {
     setPrompt('');
 
     try {
-      const userName = (await AsyncStorage.getItem('user_name')) || null;
+      // Bỏ đoạn lấy userName từ AsyncStorage vì API askGemini không nhận parameter này
+      // const userName = (await AsyncStorage.getItem('user_name')) || null;
+
       setIsBotTyping(true);
-      const response = await geminiApiClient.generateContent(message, userName);
-      setChatHistory(prev => [...prev, { role: 'bot', text: response }]);
+      // Gọi API askGemini và xử lý response theo cấu trúc mới
+      const response = await askGemini({ prompt: message }); // Gọi hàm askGemini từ botai.services.ts
+      const botReply = response.data.botReply; // <--- LẤY DỮ LIỆU TỪ RESPONSE MỚI
+
+      setChatHistory(prev => [...prev, { role: 'bot', text: botReply }]); // <--- CHỈNH CHỖ NÀY
     } catch (err: any) {
       console.error("Lỗi khi gửi tin nhắn:", err);
       const errorMessage = err.message || 'Đã xảy ra lỗi không xác định.';
