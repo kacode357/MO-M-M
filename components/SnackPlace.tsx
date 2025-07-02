@@ -120,6 +120,7 @@ const SnackPlace = () => {
     try {
       const userId = await AsyncStorage.getItem('user_id');
       if (userId) {
+        console.log(`Recording click for userId: ${userId}, snackPlaceId: ${snackPlaceId}`);
         await recordSnackPlaceClick(userId, snackPlaceId);
         console.log(`Click recorded for snackPlaceId: ${snackPlaceId}`);
       } else {

@@ -13,41 +13,41 @@ import { ActivityIndicator, FlatList, Modal, StyleSheet, Text, TextInput, Toucha
 
 // --- INTERFACES ĐÃ CẬP NHẬT ---
 interface Reply {
-  replyId: string;
-  reviewId: string;
-  userId: string;
-  userName: string;
-  image: string | null;
-  comment: string;
-  createdAt: string;
-  replies: Reply[];
+    replyId: string;
+    reviewId: string;
+    userId: string;
+    userName: string;
+    image: string | null;
+    comment: string;
+    createdAt: string;
+    replies: Reply[];
 }
 
 interface ReviewWithReplies {
-  reviewId: string;
-  snackPlaceId: string;
-  userId: string;
-  userName: string;
-  taste: number;
-  price: number;
-  sanitary: number;
-  texture: number;
-  convenience: number;
-  image: string;
-  comment: string;
-  date: string;
-  recommendCount: number;
-  isRecommend: boolean;
-  status: boolean;
-  replies: Reply[];
+    reviewId: string;
+    snackPlaceId: string;
+    userId: string;
+    userName: string;
+    taste: number;
+    price: number;
+    sanitary: number;
+    texture: number;
+    convenience: number;
+    image: string;
+    comment: string;
+    date: string;
+    recommendCount: number;
+    isRecommend: boolean;
+    status: boolean;
+    replies: Reply[];
 }
 
 // --- HELPER FUNCTION ---
 const formatDate = (dateString: string) => {
     const date = new Date(dateString);
     return new Intl.DateTimeFormat('vi-VN', {
-      year: 'numeric', month: '2-digit', day: '2-digit',
-      hour: '2-digit', minute: '2-digit',
+        year: 'numeric', month: '2-digit', day: '2-digit',
+        hour: '2-digit', minute: '2-digit',
     }).format(date);
 };
 
@@ -91,6 +91,11 @@ const Comments = () => {
     const [isSubmitting, setSubmitting] = useState(false);
     const [replyingTo, setReplyingTo] = useState<{ reviewId: string; parentReplyId: string | null } | null>(null);
 
+    // State cho AlertModal lỗi đăng nhập
+    const [showAuthErrorModal, setShowAuthErrorModal] = useState<boolean>(false);
+    const [authErrorMessage, setAuthErrorMessage] = useState<string>('');
+
+
     const fetchUserId = async () => {
         try {
             const userId = await AsyncStorage.getItem('user_id');
@@ -107,6 +112,7 @@ const Comments = () => {
         setError(null);
         try {
             const response = await getAllReviewsAndRepliesBySnackPlaceId(id);
+            console.log("Dữ liệu đánh giá nhận được:", response.data);
             if (response.status === 200 && Array.isArray(response.data)) {
                 setReviews(response.data);
             } else {
@@ -121,14 +127,15 @@ const Comments = () => {
 
     const openReplyModal = (reviewId: string, parentReplyId: string | null = null) => {
         if (!currentUserId) {
-            alert('Vui lòng đăng nhập để trả lời.');
+            setAuthErrorMessage('Vui lòng đăng nhập để trả lời bình luận.');
+            setShowAuthErrorModal(true);
             return;
         }
         setReplyingTo({ reviewId, parentReplyId });
         setModalVisible(true);
     };
 
-      const handleSendReply = async () => {
+    const handleSendReply = async () => {
         if (!replyContent.trim() || !replyingTo || !currentUserId) return;
 
         setSubmitting(true);
@@ -172,7 +179,8 @@ const Comments = () => {
 
     const handleRecommend = async (reviewId: string, isRecommend: boolean) => {
         if (!currentUserId) {
-            setError('Vui lòng đăng nhập để khuyên dùng.');
+            setAuthErrorMessage('Vui lòng đăng nhập để khuyên dùng tính năng này.');
+            setShowAuthErrorModal(true);
             return;
         }
         try {
@@ -201,7 +209,8 @@ const Comments = () => {
 
     const handleDelete = (reviewId: string) => {
         if (!currentUserId) {
-            setError('Vui lòng đăng nhập để xóa đánh giá.');
+            setAuthErrorMessage('Vui lòng đăng nhập để xóa đánh giá.');
+            setShowAuthErrorModal(true);
             return;
         }
         setReviewIdToDelete(reviewId);
@@ -227,6 +236,14 @@ const Comments = () => {
     const cancelDelete = () => {
         setShowDeleteModal(false);
         setReviewIdToDelete(null);
+    };
+
+    // Hàm đóng AlertModal lỗi đăng nhập
+    const closeAuthErrorModal = () => {
+        setShowAuthErrorModal(false);
+        setAuthErrorMessage('');
+        // Mày có thể điều hướng người dùng đến màn hình đăng nhập ở đây nếu muốn
+        // router.push('/login'); 
     };
 
     useEffect(() => {
@@ -322,6 +339,16 @@ const Comments = () => {
                 confirmText="Xóa"
                 onCancel={cancelDelete}
                 onConfirm={confirmDelete}
+            />
+
+            {/* Alert Modal cho lỗi đăng nhập */}
+            <AlertModal
+                visible={showAuthErrorModal}
+                title="Cảnh báo"
+                message={authErrorMessage}
+                showCancel={false}
+                confirmText="Đã hiểu"
+                onConfirm={closeAuthErrorModal}
             />
 
             <Modal

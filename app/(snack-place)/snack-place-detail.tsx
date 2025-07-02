@@ -80,7 +80,7 @@ const SnackPlaceDetail = () => {
   const fetchDishes = async (id: string) => {
     setLoadingDishes(true);
     const { status, data } = await getNoNotiDishesBySnackPlace(id);
-    console.log("Dishes data:", status, data);
+   
     setDishes(status === 200 && data ? data : []);
     setLoadingDishes(false);
   };
@@ -89,7 +89,7 @@ const SnackPlaceDetail = () => {
     setLoadingRatings(true);
     try {
       const data = await getAverageRate(id);
-      console.log("Rating data:", data);
+     
       setRatingData(data.data);
     } catch (error) {
       setRatingData(null);
@@ -189,7 +189,8 @@ const SnackPlaceDetail = () => {
     }
   };
 
-  const handleCommentsNavigation = () => {
+  const handleCommentsNavigation = async () => {
+   
     if (typeof snackPlaceId === "string") {
       router.push({
         pathname: "/comments",

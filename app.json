@@ -2,7 +2,7 @@
   "expo": {
     "name": "Măm Map",
     "slug": "m-m",
-    "version": "2.0.6",
+    "version": "2.0.7",
     "orientation": "portrait",
     "icon": "./assets/images/logo-app.png",
     "scheme": "mm",
@@ -22,6 +22,7 @@
         "backgroundColor": "#ffffff"
       },
       "edgeToEdgeEnabled": true,
+      "versionCode": 8,
       "package": "com.kaluu.mm",
       "config": {
         "googleMaps": {
@@ -44,7 +45,7 @@
     "extra": {
       "router": {},
       "eas": {
-        "projectId": "1821a3b9-25d2-4137-b295-65763b13deee"
+        "projectId": "7a832a8c-2f16-47f7-b6ed-59c6b5978542"
       }
     }
   }

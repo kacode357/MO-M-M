@@ -47,10 +47,8 @@ const getSnackPlaceByIdSkipAll = async (id: string) => {
   return response.data;
 };
 const recordSnackPlaceClick = async (userId: string, snackPlaceId: string) => {
-  const response = await skipNotiAxiosInstance.post('/api/SnackPlaces/click', {
-    userId,
-    snackPlaceId,
-  });
+  const body = { userId, snackPlaceId };
+  const response = await skipNotiAxiosInstance.post('/api/SnackPlaces/click', body);
   return response.data;
 };
 const getAllSnackPlaceAttributes = async () => {
