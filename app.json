@@ -22,7 +22,7 @@
         "backgroundColor": "#ffffff"
       },
       "edgeToEdgeEnabled": true,
-      "versionCode": 8,
+      "versionCode": 20,
       "package": "com.kaluu.mm",
       "config": {
         "googleMaps": {
@@ -45,7 +45,7 @@
     "extra": {
       "router": {},
       "eas": {
-        "projectId": "7a832a8c-2f16-47f7-b6ed-59c6b5978542"
+     
       }
     }
   }
